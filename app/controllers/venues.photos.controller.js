@@ -1,11 +1,15 @@
 const Photo = require('../models/venues.photos.model');
+const fileSystem = require("fs");
 
 exports.create = function(req, res) {
     let venueId = req.params.id,
         filename = req.params.photoFileName;
     let photo_data = req.body;
 
-    let photo = photo_data.photo; // TODO What do I do with this?????
+    let photo = photo_data.photo; // TODO Does this work?
+    fileSystem.writeFile("venue_photos\\" + venueId + "\\" + filename, photo, function(err) {
+        if (err) throw err;
+    });
 
     let values = [
         [venueId],
