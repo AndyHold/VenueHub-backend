@@ -1,6 +1,6 @@
 const Users = require('../models/users.model.js');
 
-exports.register = function() {
+exports.register = function(req, res) {
     let user_data = req.body;
     let values = [
         [user_data.username],
@@ -14,7 +14,7 @@ exports.register = function() {
     });
 };
 
-exports.login = function() {
+exports.login = function(req, res) {
     let user_data = req.body;
 
     let values = [
@@ -28,12 +28,12 @@ exports.login = function() {
     });
 };
 
-exports.logout = function() {
+exports.logout = function(req, res) {
     let user_data = req.body;
     return null;
 };
 
-exports.getUser = function() {
+exports.getUser = function(req, res) {
     let id = req.params.id;
 
     Users.getUser(id, function(result) {
@@ -41,7 +41,7 @@ exports.getUser = function() {
     });
 };
 
-exports.updateUser = function() {
+exports.updateUser = function(req, res) {
     let userId = req.params.id,
         user_data = req.body;
 
