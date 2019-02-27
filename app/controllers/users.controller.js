@@ -1,43 +1,77 @@
 const Users = require('../models/users.model.js');
 
 exports.register = function(req, res) {
+    // Get the user data JSON object from the request body
     let user_data = req.body;
+    // Parse the object into a values list that can be used in the database request
     let values = [
-        [user_data.username],
-        [user_data.email],
-        [user_data.givenName],
-        [user_data.familyName],
-        [user_data.password]
+        [user_data['username']],
+        [user_data["email"]],
+        [user_data["givenName"]],
+        [user_data["familyName"]]
     ];
-    Users.register(values, function(result) {
-        res.json(result);
+    // Call the model class to do the database querying and logic
+    Users.register(values, user_data["password"], function(code, userId) {
+        // If the response code is a success
+        if (code === 201) {
+            // send the code along with the userId JSON object
+            res.status(code).send(userId);
+            // If the response code is an error
+        } else if (code === 400) {
+            // send the response code
+            res.sendStatus(code);
+        }
     });
 };
 
 exports.login = function(req, res) {
+    // Get the user data JSON object from the request body
     let user_data = req.body;
-
+    // Parse the object into a values list that can be used in the database request
     let values = [
-        [user_data.username],
-        [user_data.email],
-        [user_data.password]
+        [user_data['username']],
+        [user_data['email']],
+        [user_data['password']]
     ];
-
-    Users.login(values, function(result) {
-        res.json(result);
+    // Call the model class to do the database querying and logic
+    Users.login(values, function(code, userToken) {
+        // If the response code is a success
+        if (code === 200) {
+            // Send the code along with the user token object
+            res.status(code).send(userToken);
+            // If the response code is an error
+        } else if (code === 400) {
+            // Send the response code
+            res.sendStatus(code);
+        }
     });
 };
 
 exports.logout = function(req, res) {
-    let user_data = req.body;
-    return null;
+    // Get the bearer from the request headers
+    const bearer = req.headers["authorization"];
+    // Call the model class to do the database querying and logic
+    Users.logout(bearer, function(code) {
+        // Send the response with the given status code
+        res.sendStatus(code);
+    })
+
 };
 
 exports.getUser = function(req, res) {
+    // Parse the id from the request parameters
     let id = req.params.id;
-
-    Users.getUser(id, function(result) {
-        res.json(result);
+    // Call the model class to do the database querying and logic
+    Users.getUser(id, function(code, userObj) {
+        // If the response code is an error
+        if (code === 404) {
+            // Send the response code
+            res.sendStatus(code);
+            // If the response code is a success
+        } else if (code === 200) {
+            // Send the code along with the user object
+            res.status(code).send(userObj);
+        }
     });
 };
 
