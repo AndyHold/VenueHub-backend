@@ -96,7 +96,7 @@ exports.login = function(values, done) {
 };
 
 exports.logout = function(bearer, done) {
-    // If the type is not undefined
+    // If the bearer header type is not undefined
     if (typeof bearer !== 'undefined') {
         // Parse the token from the bearer header
         const token = bearer.split(" ")[1];
@@ -153,8 +153,32 @@ exports.getUser = function(userId, done) {
     });
 };
 
-exports.updateUser = function(values, done) {
-    db.getPool().query('UPDATE User SET username = ?, email = ?, given_name = ?, family_name = ?, password = ? WHERE user_id = ?', values, function (err, rows) {
+exports.updateUser = function(values, bearer, userId, done) {
+    // If the bearer header type is not undefined
+    if (typeof bearer !== 'undefined') {
+        // Parse the token from the bearer header
+        const token = bearer.split(" ")[1];
+        // Call the database to get the user id corresponding to the token.
+        db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [token], function (err, rows) {
+            // If the database returns an error or there are no users with the token
+            if (err || rows.length === 0) {
+                // Return the done function with code of 401
+                return done(401);
+                // Otherwise if the users token matches the user they wish to change
+            } else if (userId === rows[0]["user_id"]) {
+
+            } else {
+                // Return the done function with code of 401
+                return done(401)
+            }
+        });
+        // Otherwise
+    } else {
+        // Return the done function with a 401 code
+        return done(401);
+    }
+
+    db.getPool().query('UPDATE User SET username = ?, email = ?, given_name = ?, family_name = ?, password = ? WHERE user_id = ?', [userId], function (err, rows) {
 
         if (err) return done({"ERROR": "Error selecting"});
 

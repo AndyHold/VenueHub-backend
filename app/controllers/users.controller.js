@@ -76,19 +76,21 @@ exports.getUser = function(req, res) {
 };
 
 exports.updateUser = function(req, res) {
-    let userId = req.params.id,
-        user_data = req.body;
-
+    // Parse the id from the request parameters
+    const userId = req.params.id;
+    // Get the user data JSON object from the request body
+    const userData = req.body;
+    // Get the bearer from the request headers
+    const bearer = req.headers["authorization"];
+    // Put the details in a values
     let values = [
-        [user_data.username],
-        [user_data.email],
-        [user_data.givenName],
-        [user_data.familyName],
-        [user_data.password],
-        [userId]
+        [userData.givenName],
+        [userData.familyName],
+        [userData.password]
     ];
-
-    Users.updateUser(values, function(result) {
-        res.json(result);
+    // Call the model class to query the database and do the logic
+    Users.updateUser(values, bearer, userId, function(code) {
+        // Send the status code in the response
+        res.sendStatus(code);
     });
 };
