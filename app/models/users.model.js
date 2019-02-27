@@ -1,6 +1,6 @@
 const db = require('../../config/db');
 const uidGenerator = require('uid-generator');
-const uidGen = new uidGenerator(128,UIDGenerator.BASE58,32);
+const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 
 exports.register = function(values, done) {
     db.get_pool().query('INSERT INTO user (username, email, given_name, family_name, password) VALUES ?, ?, ?, ?, ?', values, function (err, rows) {
