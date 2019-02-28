@@ -1,14 +1,14 @@
 const venues = require('../controllers/venues.controller');
 
 module.exports = function(app) {
-    app.route('/venues')
+    app.route(app.rootUrl + '/venues')
         .get(venues.list)
         .post(venues.create);
 
-    app.route('/venues/:Id')
+    app.route(app.rootUrl + '/venues/:Id')
         .get(venues.read)
         .patch(venues.update);
 
-    app.route('/categories')
+    app.route(app.rootUrl + '/categories')
         .get(venues.catList);
 };
