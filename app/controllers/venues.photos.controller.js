@@ -33,7 +33,7 @@ exports.read = function(req, res) {
     ];
 
     Photo.getPhoto(values, function(result) {
-        res.json(result); // TODO is this correct?
+        res.send(result); // TODO is this correct?
     });
 };
 

@@ -2,16 +2,9 @@ const Users = require('../models/users.model.js');
 
 exports.register = function(req, res) {
     // Get the user data JSON object from the request body
-    let user_data = req.body;
-    // Parse the object into a values list that can be used in the database request
-    let values = [
-        [user_data['username']],
-        [user_data["email"]],
-        [user_data["givenName"]],
-        [user_data["familyName"]]
-    ];
+    let userData = req.body;
     // Call the model class to do the database querying and logic
-    Users.register(values, user_data["password"], function(code, userId) {
+    Users.register(userData, function(code, userId) {
         // If the response code is a success
         if (code === 201) {
             // send the code along with the userId JSON object

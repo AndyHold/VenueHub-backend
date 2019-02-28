@@ -3,41 +3,97 @@ const uidGenerator = require('uid-generator');
 const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 const crypt = require("bcrypt");
 
-exports.register = function(values, password, done) {
-    // Call crypt to hash the password
-    crypt.hash(password, 10, function(err, hash) {
-        // If the hash returns an error
-        if (err) {
-            // Return the done function with code of 400 and a null object
-            return done(400, null);
+exports.register = function(userData, done) {
+    // If any of the expected values were empty or absent
+    if (!userData.hasOwnProperty("username") ||
+        !userData.hasOwnProperty("email") ||
+        !userData.hasOwnProperty("givenName") ||
+        !userData.hasOwnProperty("familyName") ||
+        !userData.hasOwnProperty("password") ||
+        userData["username"].length === 0 ||
+        userData["email"].length === 0 ||
+        userData["givenName"].length === 0 ||
+        userData["familyName"].length === 0 ||
+        userData["password"].length === 0) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+        // Otherwise
+    } else {
+        // Extract the email from userData
+        let email = userData["email"].split("@");
+        // If the email does not have exactly 1 @ symbol surrounded by text
+        if (email.length !== 2) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
             // Otherwise
         } else {
-            // Add the hashed password to the values list
-            values.push([hash]);
-        }
-        // Call the database to add the user with the given credentials
-        db.getPool().query('INSERT INTO User (username, email, given_name, family_name, password) VALUES (?, ?, ?, ?, ?)', values, function (err) {
-            // If the database returns an error
-            if (err) {
-                // Return the done function with code of 400 and a null object
-                return done(400, null);
+            // Extract the domain and local from the email
+            let domain = email[1].split(".");
+            let localPart = email[0];
+            // If the domain does not have at least one dot or the space between dots does not contain text or the local part is empty
+            if (localPart.length === 0 || domain.length < 2 ||
+                function () { // Called imediately
+                    // Iterate through each section of the domain
+                    for (let i = 0; i < domain.length; i++) {
+                        // If that section is empty
+                        if (domain[i].length === 0) {
+                            // Return true
+                            return true;
+                        }
+                    }
+                    // At the end return false because none of the sections were empty.
+                    return false;
+                }()) {
+                // Return the done function with a 400 - Bad Request code
+                return done(400);
                 // Otherwise
             } else {
-                // Call the database to get the generated user_id for the newly created user.
-                db.getPool().query("SELECT user_id FROM User WHERE username = ?", values, function (err, rows) {
-                    // If the database returns an error
+                // Extract the password from the userData
+                let password = userData["password"];
+                // Extract the userData object into a values list that can be used in the database request
+                let values = [
+                    [userData['username']],
+                    [userData["email"]],
+                    [userData["givenName"]],
+                    [userData["familyName"]]
+                ];
+                // Call crypt to hash the password
+                crypt.hash(password, 10, function (err, hash) {
+                    // If the hash returns an error
                     if (err) {
                         // Return the done function with code of 400 and a null object
                         return done(400, null);
                         // Otherwise
                     } else {
-                        // Return the done function with code 201 and an object with the user_id
-                        return done(201, {"userId": rows[0]["user_id"]})
+                        // Add the hashed password to the values list
+                        values.push([hash]);
                     }
+                    // Call the database to add the user with the given credentials
+                    db.getPool().query('INSERT INTO User (username, email, given_name, family_name, password) VALUES (?, ?, ?, ?, ?)', values, function (err) {
+                        // If the database returns an error
+                        if (err) {
+                            // Return the done function with code of 400 and a null object
+                            return done(400, null);
+                            // Otherwise
+                        } else {
+                            // Call the database to get the generated user_id for the newly created user.
+                            db.getPool().query("SELECT user_id FROM User WHERE username = ?", values, function (err, rows) {
+                                // If the database returns an error
+                                if (err) {
+                                    // Return the done function with code of 400 and a null object
+                                    return done(400, null);
+                                    // Otherwise
+                                } else {
+                                    // Return the done function with code 201 and an object with the user_id
+                                    return done(201, {"userId": rows[0]["user_id"]});
+                                }
+                            });
+                        }
+                    });
                 });
             }
-        });
-    });
+        }
+    }
 };
 
 exports.login = function(values, done) {
