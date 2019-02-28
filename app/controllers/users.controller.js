@@ -15,7 +15,7 @@ exports.register = function(req, res) {
         // If the response code is a success
         if (code === 201) {
             // send the code along with the userId JSON object
-            res.status(code).send(userId);
+            res.status(code).json(userId);
             // If the response code is an error
         } else if (code === 400) {
             // send the response code
@@ -38,7 +38,7 @@ exports.login = function(req, res) {
         // If the response code is a success
         if (code === 200) {
             // Send the code along with the user token object
-            res.status(code).send(userToken);
+            res.status(code).json(userToken);
             // If the response code is an error
         } else if (code === 400) {
             // Send the response code
