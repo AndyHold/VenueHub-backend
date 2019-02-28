@@ -193,29 +193,46 @@ exports.logout = function(bearer, done) {
     }
 };
 
-exports.getUser = function(userId, done) {
-    // Call the database to get the data from the selected user
-    db.getPool().query('SELECT * FROM User WHERE user_id = ?', [[userId]], function (err, rows) {
-        // If the database returns an error OR there are no users returned
-        if (err || rows.length === 0) {
-            // Return the done function with code of 404 and a null object
-            return done(404, null)
+exports.getUser = function(userId, bearer, done) {
+    let userQuery = "SELECT username";
+    let token = "";
+    // If the bearer header type is not undefined
+    if (typeof bearer !== 'undefined') {
+        // Parse the token from the bearer header
+        token = bearer.split(" ")[1];
+    }
+    // Call the database to get the user id corresponding to the token.
+    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [token], function (err, rows) {
+        // If the database returns an error
+        if (err) {
+            // Set rows to an empty array
+            rows = [];
             // Otherwise
-        } else {
-            // Create the user object
-            let userObj = {
-                "username": rows[0]["username"],
-                "email": rows[0]["email"],
-                "givenName": rows[0]["given_name"],
-                "familyName": rows[0]["family_name"]
-            };
-            // Return the done function with code of 200 and an object defining the user
-            return done(200, userObj);
         }
+        // If the database returns a user and it matches the requested user
+        if (rows.length !== 0 && rows[0]["userId"] === userId) {
+            // Add the email option to the user query along with the rest of the options
+            userQuery += ", email, given_name AS givenName, family_name AS familyName FROM User WHERE user_id=?"
+        } else {
+            // Finish the query with the rest of the options
+            userQuery += ", given_name AS givenName, family_name AS familyName FROM User WHERE user_id=?"
+        }
+        // Call the database to get the data from the selected user
+        db.getPool().query(userQuery, [userId], function (err, rows) {
+            // If the database returns an error OR there are no users returned
+            if (err || rows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404)
+                // Otherwise
+            } else {
+                // Return the done function with a 200 - OK code and an object defining the user
+                return done(200, rows[0]);
+            }
+        });
     });
 };
 
-exports.updateUser = function(values, bearer, userId, done) {
+exports.updateUser = function(userData, bearer, userId, done) {
     // Call the database to get the details for the given user
     db.getPool().query("SELECT * FROM User WHERE user_id = ?", [userId], function (err, rows) {
         // If the database returns an error or there are no users with the given user_id

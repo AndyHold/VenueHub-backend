@@ -46,10 +46,12 @@ exports.logout = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
+    // Get the bearer from the request headers
+    const bearer = req.headers["authorization"];
     // Parse the id from the request parameters
     let id = req.params.id;
     // Call the model class to do the database querying and logic
-    Users.getUser(id, function(code, userObj) {
+    Users.getUser(id, bearer, function(code, userObj) {
         // If the response code is an error
         if (code === 404) {
             // Send the response code

@@ -1,6 +1,23 @@
 # MySQL script for inserting sample data into the database
 
 
+INSERT INTO User
+  (username, email, given_name, family_name, password)
+VALUES
+    ("bobby1", "bob.roberts@gmail.com", "Bob", "Roberts", "password"),
+    ("black.panther", "black.panther@super.heroes", "T", "Challa", "Wakanda"),
+    ("superman", "superman@super.heroes", "Clark", "Kent", "kryptonite"),
+    ("batman", "dark.knight@super.heroes", "Bruce", "Wayne", "frankmiller"),
+    ("spiderman", "spiderman@super.heroes", "Peter", "Parker", "arachnid"),
+    ("ironman", "ironman@super.heroes", "Tony", "Stark", "robertdowney"),
+    ("captain.america", "captain.america@super.heroes", "Steve", "Rogers", "donaldtrump"),
+    ("dr.manhatten", "dr.manhatten@super.heroes", "Jonathan", "Osterman", "hydrogen"),
+    ("vampire.slayer", "vampire.slayer@super.heroes", "Buffy", "Summers", "sarahgellar"),
+    ("Ozymandias", "Ozymandias@super.villains", "Adrian", "Veidt", "shelley"),
+    ("Rorschach", "Rorschach@super.villains", "Walter", "Kovacs", "Joseph"),
+    ("power.woman", "power.woman@super.heroes", "Jessica", "Jones", "lukecage");
+
+
 INSERT INTO VenueCategory
     (category_id, category_name, category_description)
 VALUES
