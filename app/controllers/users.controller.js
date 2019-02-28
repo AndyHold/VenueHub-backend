@@ -19,15 +19,9 @@ exports.register = function(req, res) {
 
 exports.login = function(req, res) {
     // Get the user data JSON object from the request body
-    let user_data = req.body;
-    // Parse the object into a values list that can be used in the database request
-    let values = [
-        [user_data['username']],
-        [user_data['email']],
-        [user_data['password']]
-    ];
+    let userData = req.body;
     // Call the model class to do the database querying and logic
-    Users.login(values, function(code, userToken) {
+    Users.login(userData, function(code, userToken) {
         // If the response code is a success
         if (code === 200) {
             // Send the code along with the user token object
@@ -69,12 +63,12 @@ exports.getUser = function(req, res) {
 };
 
 exports.updateUser = function(req, res) {
-    // Parse the id from the request parameters
-    const userId = req.params.id;
     // Get the user data JSON object from the request body
     const userData = req.body;
     // Get the bearer from the request headers
     const bearer = req.headers["authorization"];
+    // Parse the id from the request parameters
+    const userId = req.params.id;
     // Call the model class to query the database and do the logic
     Users.updateUser(userData, bearer, userId, function(code) {
         // Send the status code in the response

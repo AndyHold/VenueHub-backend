@@ -96,7 +96,13 @@ exports.register = function(userData, done) {
     }
 };
 
-exports.login = function(values, done) {
+exports.login = function(userData, done) {
+    // Parse the object into a values list that can be used in the database request
+    let values = [
+        [userData['username']],
+        [userData['email']],
+        [userData['password']]
+    ];
     // Call the database to get the users credentials
     db.getPool().query('SELECT * FROM User where username = ?', values, function (err, rows) {
         // If the database returns an error
