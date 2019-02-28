@@ -1,8 +1,19 @@
 const Venue = require('../models/venues.model');
 
 exports.list = function(req, res) {
-    Venue.getAll(function(result) {
-        res.json(result);
+    // Get the queries from the request
+    let queries = req.query;
+    // Call the model function to query the database and perform the logic
+    Venue.getVenues(queries, function(code, results) {
+        // If the code is 200
+        if (code === 200) {
+            // Send the code with the results
+            res.status(code).json(results);
+            // Otherwise
+        } else {
+            // Send the given status code
+            res.sendStatus(code);
+        }
     });
 };
 
