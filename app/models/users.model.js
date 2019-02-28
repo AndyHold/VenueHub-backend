@@ -154,34 +154,58 @@ exports.getUser = function(userId, done) {
 };
 
 exports.updateUser = function(values, bearer, userId, done) {
-    // If the bearer header type is not undefined
-    if (typeof bearer !== 'undefined') {
-        // Parse the token from the bearer header
-        const token = bearer.split(" ")[1];
-        // Call the database to get the user id corresponding to the token.
-        db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [token], function (err, rows) {
-            // If the database returns an error or there are no users with the token
-            if (err || rows.length === 0) {
-                // Return the done function with code of 401
-                return done(401);
-                // Otherwise if the users token matches the user they wish to change
-            } else if (userId === rows[0]["user_id"]) {
-
+    // Call the database to get the details for the given user
+    db.getPool().query("SELECT * FROM User WHERE user_id = ?", [userId], function (err, rows) {
+        // If the database returns an error or there are no users with the given user_id
+        if (err || rows.length === 0) {
+            // Return the done function with a 404 - Not Found code
+            return done(404);
+            // Otherwise
+        } else {
+            // If the bearer header type is not undefined
+            if (typeof bearer !== 'undefined') {
+                // Parse the token from the bearer header
+                const token = bearer.split(" ")[1];
+                // If there is no auth token for the given user (not logged in) or it doesn't match the request token
+                if (rows[0]["auth_token"] === undefined || rows[0]["auth_token"] !== token) {
+                    // Return the done function with a 403 - Forbidden code
+                    return done(403);
+                    // Otherwise if the userdata contains all the required fields
+                } else if (userData.hasOwnProperty("givenName") &&
+                    userData.hasOwnProperty("familyName") &&
+                    userData.hasOwnProperty("password")) {
+                    // Put the details in a values list
+                    let values = [
+                        [userData.givenName],
+                        [userData.familyName],
+                        [userData.password],
+                        [userId]
+                    ];
+                    // Call the database to update the users details
+                    db.getPool().query('UPDATE User SET given_name = ?, family_name = ?, password = ? WHERE user_id = ?', values, function (err) {
+                        // If the database returns an error
+                        if (err) {
+                            // Return the done function with a 400 - Bad Request code
+                            return done(400);
+                            // Otherwise
+                        } else {
+                            // Return the done function with a 200 - OK code
+                            return done(200);
+                        }
+                    });
+                    //Otherwise
+                } else {
+                    // Return the done function with a 400 - Bad Request code
+                    return done(400);
+                }
+                // Otherwise
             } else {
-                // Return the done function with code of 401
-                return done(401)
+                // Return the done function with a 401 - Unauthorized code
+                return done(401);
             }
-        });
-        // Otherwise
-    } else {
-        // Return the done function with a 401 code
-        return done(401);
-    }
-
-    db.getPool().query('UPDATE User SET username = ?, email = ?, given_name = ?, family_name = ?, password = ? WHERE user_id = ?', [userId], function (err, rows) {
-
-        if (err) return done({"ERROR": "Error selecting"});
-
-        return done(rows)
+        }
     });
+
+
+
 };

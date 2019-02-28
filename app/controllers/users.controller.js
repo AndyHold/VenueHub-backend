@@ -82,14 +82,8 @@ exports.updateUser = function(req, res) {
     const userData = req.body;
     // Get the bearer from the request headers
     const bearer = req.headers["authorization"];
-    // Put the details in a values
-    let values = [
-        [userData.givenName],
-        [userData.familyName],
-        [userData.password]
-    ];
     // Call the model class to query the database and do the logic
-    Users.updateUser(values, bearer, userId, function(code) {
+    Users.updateUser(userData, bearer, userId, function(code) {
         // Send the status code in the response
         res.sendStatus(code);
     });
