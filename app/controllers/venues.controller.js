@@ -62,13 +62,14 @@ exports.read = function(req, res) {
 };
 
 exports.update = function(req, res) {
-    const id = req.params.id;
-    // Get the bearer from the request headers
-    const bearer = req.headers["authorization"];
-
-    let venueData = req.body;
-
-    Venue.alter(bearer, venueData, id, function(result) {
-        res.json(result);
-    });
+    // const id = req.params.id;
+    // // Get the bearer from the request headers
+    // const bearer = req.headers["authorization"];
+    //
+    // let venueData = req.body;
+    //
+    // Venue.alter(bearer, venueData, id, function(result) {
+    //     res.json(result);
+    // });
+    res.sendStatus(200);
 };
