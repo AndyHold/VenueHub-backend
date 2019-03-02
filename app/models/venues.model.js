@@ -54,7 +54,7 @@ exports.getVenues = function(queries, done) {
             queryBody += "WHERE";
         }
         // Add the query to the queryBody
-        queryBody += " category_id=" + queries["categoryId"];
+        queryBody += " categoryId=" + queries["categoryId"];
     }
     // If minStarRating is a query option
     if (queries.hasOwnProperty("minStarRating")) {
@@ -144,10 +144,10 @@ exports.getVenues = function(queries, done) {
         }
     }
     // Set the queryTemplate and concatenate the search options
-    let queryTemplate = "SELECT *\n" +
+    let queryTemplate = "SELECT venueId, venueName, categoryId, city, shortDescription, latitude, longitude, meanStarRating, modeCostRating, primaryPhoto\n" +
         "FROM (\n" +
             "SELECT\n" +
-            "Venue.venue_id AS venueId, Venue.venue_name AS venueName, " +
+            "Venue.venue_id AS venueId, admin_id, Venue.venue_name AS venueName, " +
             "Venue.category_id AS categoryId, Venue.city, Venue.short_description AS shortDescription, Venue.latitude, " +
             "Venue.longitude, COALESCE(STAR_RATING, 0 ) AS meanStarRating, COALESCE(COST_RATING, 0) AS modeCostRating, " +
             "primaryPhoto\n" +
