@@ -19,6 +19,7 @@ const haversine = function (longitude1, latitude1, longitude2, latitude2) {
 };
 
 exports.getVenues = function(queries, done) {
+    // TODO refactor this code so it is more readable with smaller functions
     // Set the booleans sortByDistance and reverseOrder to false and queryBody to an empty string
     let sortByDistance = false;
     let reverseOrder = false;
@@ -234,32 +235,161 @@ exports.getVenues = function(queries, done) {
 };
 
 exports.getCats = function(done) {
-    db.getPool().query('SELECT * FROM VenueCategory', function (err, rows) {
-
-        if (err) return done({"ERROR": "Error selecting"});
-
-        return done(rows)
+    db.getPool().query('SELECT category_id AS categoryId, category_name AS categoryName, category_description AS categoryDescription FROM VenueCategory', function (err, rows) {
+        // If the database returns an error
+        if (err) {
+            // Set rows to an empty array
+            rows = [];
+        //Otherwise
+        }
+        // Return the done function with the rows that the database returned
+        return done(rows);
     });
 };
 
 exports.getOne = function(venueId, done) {
-    db.getPool().query('SELECT * FROM Venue where venue_id = ?', venueId, function(err, rows) {
-        if (err) return done(err);
-        done(rows);
+    // Call the database to get the venue data
+    db.getPool().query('SELECT venue_name AS venueName, admin_id AS admin, category_id AS category, city, ' +
+        'short_description AS shortDescription, long_description as longDescription, date_added AS dateAdded, ' +
+        'address, latitude, longitude FROM Venue WHERE venue_id=?', [venueId], function(err, venueRows) {
+        // If the database returns an error or the rows are empty
+        if (err || venueRows.length === 0) {
+            // Return the done function with a 404 - Not Found code
+            return done(404);
+        // Otherwise
+        } else {
+            // Call the database to get the admin information
+            db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [venueRows[0]["admin"]], function (err, adminRows) {
+                // If the database returns an error or the rows are empty
+                if (err || adminRows.length === 0) {
+                    console.log(adminRows);
+                    // Return the done function with a 404 - Not Found code
+                    return done(404);
+                // Otherwise
+                } else {
+                    // Set the admin field in the venue rows to be the results.
+                    venueRows[0]["admin"] = adminRows[0]; // TODO is the admin id number supposed to be a string?
+                    // Call the database to get the category information
+                    db.getPool().query("SELECT category_id as categoryId, category_name AS categoryName, " +
+                        "category_description AS categoryDescription FROM VenueCategory WHERE category_id=?", [venueRows[0]["category"]], function (err, categoryRows) {
+                        // If the database returns an error or the rows are empty
+                        if (err || categoryRows.length === 0) {
+                            console.log(err);
+                            // Return the done function with a 404 - Not Found code
+                            return done(404);
+                        // Otherwise
+                        } else {
+                            // Set the category field in the venue rows to be the results
+                            venueRows[0]["category"] = categoryRows[0];
+                            // Call the database to get the venue photos
+                            db.getPool().query("SELECT photo_filename as photoFilename," +
+                                " photo_description AS photoDescription, is_primary AS isPrimary FROM VenuePhoto " +
+                                "WHERE venue_id=?", [venueId], function (err, photoRows) {
+                                // If the database returns an error or the rows are empty
+                                if (err) {
+                                    console.log(err);
+                                    // Return the done function with a 404 - Not Found code
+                                    return done(404);
+                                // Otherwise
+                                } else {
+                                    // Set the photos field in the venue rows to be the results
+                                    venueRows[0]["photos"] = photoRows;
+                                    // Return the done function with a 200 - OK code and the results
+                                    return done(200, venueRows[0]);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
     });
 };
 
-exports.insert = function(values, done) {
-
-    db.getPool().query('INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?', values, function(err, result) {
-
-        if (err) return done(err);
-
-        done(result);
-    });
+exports.insert = function(bearer, venueData, done) {
+    // Put the new venue data into an array ready for the database to insert.
+    let values =  [
+        [venueData["venueName"]],
+        [venueData["categoryId"]],
+        [venueData["city"]],
+        [venueData["shortDescription"]],
+        [venueData["longDescription"]],
+        [venueData["address"]],
+        [venueData["latitude"]],
+        [venueData["longitude"]
+        ]
+    ];
+    // If any of the necessary values are missing or incorrect
+    if (!(venueData.hasOwnProperty("venueName") && typeof venueData["venueName"] === typeof "" && venueData["venueName"].length !== 0) ||
+        !(venueData.hasOwnProperty("categoryId") && typeof venueData["categoryId"] === typeof 0) ||
+        !(venueData.hasOwnProperty("city") && typeof venueData["city"] === typeof "" && venueData["city"].length !== 0) ||
+        !(venueData.hasOwnProperty("shortDescription") && typeof venueData["shortDescription"] === typeof "" && venueData["shortDescription"].length !== 0) ||
+        !(venueData.hasOwnProperty("longDescription") && typeof venueData["longDescription"] === typeof "" && venueData["longDescription"].length !== 0) ||
+        !(venueData.hasOwnProperty("address") && typeof venueData["address"] === typeof "" && venueData["address"].length !== 0) ||
+        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === typeof 0.1) ||
+        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === typeof 0.1)) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    // Otherwise
+    } else {
+        // If the bearer header type is not undefined
+        if (typeof bearer !== 'undefined') {
+            // Parse the token from the bearer header
+            const token = bearer.split(" ")[1];
+            // Call the database to retrieve the user asscosiated with this token
+            db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [token], function (err, rows) {
+                // If the database returns an error
+                if (err) {
+                    // Set rows to an empty array
+                    rows = [];
+                    // Otherwise
+                }
+                // If the rows are empty (there is no user logged in with this token)
+                if (rows.length === 0) {
+                    // Return the done function with a 403 - Unauthorized code
+                    return done(403)
+                // Otherwise
+                } else {
+                    // Extract the user id from the rows
+                    let userId = rows[0]["userId"];
+                    // Push the userId onto the values array
+                    values.push([userId]);
+                    // Call the database to insert the new venue
+                    db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
+                        // If the database returns an error
+                        if (err) {
+                            // Return the done function with a 400 - Bad Request code
+                            return done(400);
+                        // Otherwise
+                        } else {
+                            // Return the done function with a 201 - Created code and an object containing the new venue id
+                            return done(201, {"venueId": rows[0]["insertId"]});
+                        }
+                    });
+                }
+            });
+        // Otherwise
+        } else {
+            // Return the done function with a 401 - Unauthorized code
+            return done(401);
+        }
+    }
 };
 
-exports.alter = function(values, done) {
+exports.alter = function(bearer, venueData, done) {
+
+    let values = [
+        [venueData.venueName],
+        [venueData.categoryId],
+        [venueData.city],
+        [venueData.shortDescription],
+        [venueData.longDescription],
+        [venueData.address],
+        [venueData.latitude],
+        [venueData.longitude],
+        [id]
+    ];
+
     db.getPool().query('UPDATE Venue SET venue_name = ?, category_id = ?, city = ?, short_description = ?, long_description = ?, address = ?, latitude = ?, longitude = ?) WHERE venue_id = ?', values, function(err, result) {
 
         if (err) return done(err);

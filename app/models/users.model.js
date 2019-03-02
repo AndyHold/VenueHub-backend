@@ -4,16 +4,16 @@ const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 const crypt = require("bcrypt");
 
 exports.register = function(userData, done) {
-    // If any of the expected values were empty or absent
+    // If any of the expected values were empty or absent or too long
     if (!userData.hasOwnProperty("username") ||
         !userData.hasOwnProperty("email") ||
         !userData.hasOwnProperty("givenName") ||
         !userData.hasOwnProperty("familyName") ||
         !userData.hasOwnProperty("password") ||
-        userData["username"].length === 0 ||
-        userData["email"].length === 0 ||
-        userData["givenName"].length === 0 ||
-        userData["familyName"].length === 0 ||
+        userData["username"].length === 0 || userData["username"].length > 64 ||
+        userData["email"].length === 0 || userData["email"].length > 128 ||
+        userData["givenName"].length === 0 || userData["givenName"].length > 128 ||
+        userData["familyName"].length === 0 || userData["familyName"].length > 128 ||
         userData["password"].length === 0) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
@@ -97,62 +97,87 @@ exports.register = function(userData, done) {
 };
 
 exports.login = function(userData, done) {
-    // Parse the object into a values list that can be used in the database request
-    let values = [
-        [userData['username']],
-        [userData['email']],
-        [userData['password']]
-    ];
+    // Define the variables username, email, and password
+    let username;
+    let email;
+    let password;
+    // If there was no password
+    if (!userData.hasOwnProperty("password")) {
+        // return the done function with a 400 - Bad Request code
+        return done(400);
+    }
+    // Set the query template
+    let queryString = "SELECT * FROM User WHERE ";
+    // If the username was entered
+    if (userData.hasOwnProperty("username")) {
+        // Add the username to the username variable
+        username = userData["username"];
+        // Add the username to the query
+        queryString += "username=" + username;
+    // If the email was entered
+    }
+    if (userData.hasOwnProperty("email")) {
+        // Add the email to the email variable
+        email = userData["email"];
+        // if the username isn't set
+        if (!username) {
+            // Add the email to the query
+            queryString += "email=" + email;
+        }
+    }
+    // If no username or email was sent
+    if (!userData.hasOwnProperty("username") && !userData.hasOwnProperty("email")) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
     // Call the database to get the users credentials
-    db.getPool().query('SELECT * FROM User where username = ?', values, function (err, rows) {
+    db.getPool().query(queryString, function (err, rows) {
         // If the database returns an error
         if (err) {
-            // Return the done function with code of 400 and a null object
-            return done(400, null);
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
             // Otherwise
         } else {
-            // Put the users input details into variables for better readability
-            let email = values[1][0],
-                password = values[2][0];
-            // Check that the emails match
-            if (rows[0].email === email) {
-                // Call crypt to check that the passwords match
-                crypt.compare(password, rows[0]["password"], function (err, res) {
-                    // If crypt returns an error or false
-                    if (err || !res) {
-                        // Return the done function with code of 400 and a null object
-                        return done(400, null);
-                        // Otherwise
-                    } else {
-                        // Call uidGen to create a random token
-                        uidGen.generate((err, uid) => {
-                            // If uid generates an error
-                            if (err) {
-                                // Return the done function with code of 400 and a null object
-                                return done(400, null);
-                                //Otherwise
-                            } else {
-                                // Call the database to set the auth token for this user
-                                db.getPool().query('UPDATE User SET auth_token = ? WHERE user_id = ?', [[uid], [rows[0].user_id]], function (err) {
-                                    // If the database returns an error
-                                    if (err) {
-                                        // Return the done function with code of 400 and a null object
-                                        return done(400, null);
-                                        // Otherwise
-                                    } else {
-                                        // Return the done function with code of 200 and an object containing the userId and token
-                                        return done(200, {"userId": rows[0]["user_id"], "token": uid});
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            // Otherwise
-            } else {
-                // Return the done function with code of 400 and a null object
-                return done(400, null);
+            // If both the username and the email were sent
+            if (email && username) {
+                // If the emails don't match
+                if (!rows[0].email === email) {
+                    // Return the done function with a 400 - Bad Request code
+                    return done(400);
+                }
             }
+            // Call crypt to check that the passwords match
+            crypt.compare(password, rows[0]["password"], function (err, res) {
+                // If crypt returns an error or false
+                if (err || !res) {
+                    // Return the done function with a 400 - Bad Request code
+                    return done(400);
+                    // Otherwise
+                } else {
+                    // Call uidGen to create a random token
+                    uidGen.generate((err, uid) => {
+                        // If uid generates an error
+                        if (err) {
+                            // Return the done function with code of 400 and a null object
+                            return done(400);
+                            //Otherwise
+                        } else {
+                            // Call the database to set the auth token for this user
+                            db.getPool().query('UPDATE User SET auth_token = ? WHERE user_id = ?', [[uid], [rows[0].user_id]], function (err) {
+                                // If the database returns an error
+                                if (err) {
+                                    // Return the done function with code of 400 and a null object
+                                    return done(400);
+                                    // Otherwise
+                                } else {
+                                    // Return the done function with code of 200 and an object containing the userId and token
+                                    return done(200, {"userId": rows[0]["user_id"], "token": uid});
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 };
@@ -233,58 +258,52 @@ exports.getUser = function(userId, bearer, done) {
 };
 
 exports.updateUser = function(userData, bearer, userId, done) {
-    // Call the database to get the details for the given user
-    db.getPool().query("SELECT * FROM User WHERE user_id = ?", [userId], function (err, rows) {
-        // If the database returns an error or there are no users with the given user_id
-        if (err || rows.length === 0) {
-            // Return the done function with a 404 - Not Found code
-            return done(404);
-            // Otherwise
-        } else {
-            // If the bearer header type is not undefined
-            if (typeof bearer !== 'undefined') {
-                // Parse the token from the bearer header
-                const token = bearer.split(" ")[1];
-                // If there is no auth token for the given user (not logged in) or it doesn't match the request token
-                if (rows[0]["auth_token"] === undefined || rows[0]["auth_token"] !== token) {
-                    // Return the done function with a 403 - Forbidden code
-                    return done(403);
-                    // Otherwise if the userdata contains all the required fields
-                } else if (userData.hasOwnProperty("givenName") &&
-                    userData.hasOwnProperty("familyName") &&
-                    userData.hasOwnProperty("password")) {
-                    // Put the details in a values list
-                    let values = [
-                        [userData.givenName],
-                        [userData.familyName],
-                        [userData.password],
-                        [userId]
-                    ];
-                    // Call the database to update the users details
-                    db.getPool().query('UPDATE User SET given_name = ?, family_name = ?, password = ? WHERE user_id = ?', values, function (err) {
-                        // If the database returns an error
-                        if (err) {
-                            // Return the done function with a 400 - Bad Request code
-                            return done(400);
-                            // Otherwise
-                        } else {
-                            // Return the done function with a 200 - OK code
-                            return done(200);
-                        }
-                    });
-                    //Otherwise
-                } else {
-                    // Return the done function with a 400 - Bad Request code
-                    return done(400);
-                }
-                // Otherwise
+    let token = undefined;
+    // If the bearer header type is undefined
+    if (typeof bearer === 'undefined') {
+        // Return the done function with a 401 - Unauthorized code
+        return done(401);
+    } else {
+        // Parse the token from the bearer header
+        token = bearer.split(" ")[1];
+        // Call the database to get the users information
+        db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, rows) {
+            // if the database returns an error or an empty row set
+            if (err || rows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+            // If the tokens do not match
+            } else if (token !== rows[0]["auth_token"]) {
+                // Return the done function with a 403 - Forbidden code
+                return done(403);
+            // If one or more of the required fields are missing, or incorrect
+            } else if (!userData.hasOwnProperty("givenName") || userData["givenName"].length === 0 ||
+                !userData.hasOwnProperty("familyName") || userData["familyName"].length === 0 ||
+                !userData.hasOwnProperty("password") || userData["password"].length === 0) {
+                // Return the done function with a 400 - Bad Request code
+                return done(403);
             } else {
-                // Return the done function with a 401 - Unauthorized code
-                return done(401);
+                // Call crypt to encrypt the new password
+                crypt.hash(userData["password"], 10, function (err, hash) {
+                    // If crypt returns an error
+                    if (err) {
+                        // Return the done function with a 400 - Bad Request code
+                        return done(400);
+                    } else {
+                        // Call the database to update the users records
+                        db.getPool().query("UPDATE User SET given_name=?, family_name=?, password=?, WHERE user_id=?", [[userData["givenName"]], [userData["familyName"]], [hash], [userId]], function (err) {
+                            // If the database returns an error
+                            if (err) {
+                                // Return the done function with a 400 - Bad Request code
+                                return done(400);
+                            } else {
+                                // Return the done function with a 200 - OK code
+                                return done(200);
+                            }
+                        });
+                    }
+                });
             }
-        }
-    });
-
-
-
+        });
+    }
 };
