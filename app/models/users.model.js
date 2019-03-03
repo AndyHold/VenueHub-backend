@@ -189,13 +189,11 @@ exports.logout = function(authHeader, done) {
     // If the auth header type is not undefined
     if (authHeader !== undefined) {
         // Call the database to get the user id corresponding to the token.
-        db.getPool().query("SELECT user_id FROM User WHERE auth_token=?", [authHeader], function (err, rows) {
+        db.getPool().query("SELECT user_id FROM User WHERE auth_token='" + authHeader + "'", function (err, rows) {
             // If the database returns an error or there are no users with the token
-            if (err) {
+            if (err || rows.length === 0) {
                 // Return the done function with code of 401
-                return done(402);
-            } else if (rows.length === 0) {
-                return done(404);
+                return done(401);
                 // Otherwise
             } else {
                 // Extract the user_id from the database rows
@@ -205,7 +203,7 @@ exports.logout = function(authHeader, done) {
                     // If the database returns an error
                     if (err) {
                         // Return the done function with code of 401
-                        return done(403);
+                        return done(401);
                         // Otherwise
                     } else {
                         // Return the done function with a code of 200
