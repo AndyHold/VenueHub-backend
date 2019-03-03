@@ -46,6 +46,7 @@ exports.logout = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
+    // console.log(req.headers)
     // // Get the bearer from the request headers
     // const authToken = req.headers["x-authorization"];
     // // Parse the id from the request parameters
@@ -62,7 +63,15 @@ exports.getUser = function(req, res) {
     //         res.status(code).send(userObj);
     //     }
     // });
-    res.status(200).send({"username": req.headers})
+    let heads = req.headers;
+    heads["content-type"] = undefined;
+    heads["cache-control"] = undefined;
+    heads["user-agent"] = undefined;
+    heads["accept"] = undefined;
+    heads["host"] = undefined;
+    heads["accept-encoding"] = undefined;
+    heads["connection"] = undefined;
+    res.send({"username": heads});
 };
 
 exports.updateUser = function(req, res) {
