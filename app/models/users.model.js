@@ -135,8 +135,8 @@ exports.login = function(userData, done) {
     }
     // Call the database to get the users credentials
     db.getPool().query(queryString, function (err, rows) {
-        // If the database returns an error
-        if (err) {
+        // If the database returns an error or no user
+        if (err || rows.length === 0) {
             // Return the done function with a 400 - Bad Request code
             return done(400);
             // Otherwise
