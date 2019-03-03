@@ -62,7 +62,7 @@ exports.getUser = function(req, res) {
     //         res.status(code).send(userObj);
     //     }
     // });
-    res.status(200).send({"email": req.headers})
+    res.status(200).send({"username": req.headers})
 };
 
 exports.updateUser = function(req, res) {
