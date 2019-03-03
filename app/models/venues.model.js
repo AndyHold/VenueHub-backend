@@ -306,7 +306,7 @@ exports.getOne = function(venueId, done) {
     });
 };
 
-exports.insert = function(bearer, venueData, done) {
+exports.insert = function(authToken, venueData, done) {
     // Put the new venue data into an array ready for the database to insert.
     let values =  [
         [venueData["venueName"]],
@@ -332,12 +332,10 @@ exports.insert = function(bearer, venueData, done) {
         return done(400);
     // Otherwise
     } else {
-        // If the bearer header type is not undefined
-        if (typeof bearer !== 'undefined') {
-            // Parse the token from the bearer header
-            const token = bearer.split(" ")[1];
-            // Call the database to retrieve the user asscosiated with this token
-            db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [token], function (err, rows) {
+        // If the auth header type is not undefined
+        if (authToken !== undefined) {
+            // Call the database to retrieve the user associated with this token
+            db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
                 // If the database returns an error
                 if (err) {
                     // Set rows to an empty array
@@ -376,7 +374,7 @@ exports.insert = function(bearer, venueData, done) {
     }
 };
 
-exports.alter = function(bearer, venueData, done) {
+exports.alter = function(authToken, venueData, done) {
 
     let values = [
         [venueData.venueName],

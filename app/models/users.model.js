@@ -186,9 +186,8 @@ exports.login = function(userData, done) {
 };
 
 exports.logout = function(authHeader, done) {
-    console.log(authHeader);
-    // If the bearer header type is not undefined
-    if (typeof authHeader !== 'undefined') {
+    // If the auth header type is not undefined
+    if (authHeader !== undefined) {
         // Call the database to get the user id corresponding to the token.
         db.getPool().query("SELECT user_id FROM User WHERE auth_token=?", [authHeader], function (err, rows) {
             // If the database returns an error or there are no users with the token
@@ -223,8 +222,8 @@ exports.logout = function(authHeader, done) {
 exports.getUser = function(userId, authToken, done) {
     let userQuery = "SELECT username";
     // If the auth header type is not undefined
-    if (typeof authToken === 'undefined') {
-        // Parse the token from the bearer header
+    if (authToken === undefined) {
+        // Parse the token from the auth header
         authToken = "";
     }
     // Call the database to get the user id corresponding to the token.
@@ -258,15 +257,12 @@ exports.getUser = function(userId, authToken, done) {
     });
 };
 
-exports.updateUser = function(userData, bearer, userId, done) {
-    let token = undefined;
-    // If the bearer header type is undefined
-    if (typeof bearer === 'undefined') {
+exports.updateUser = function(userData, authToken, userId, done) {
+    // If the auth header type is undefined
+    if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
         return done(401);
     } else {
-        // Parse the token from the bearer header
-        token = bearer.split(" ")[1];
         // Call the database to get the users information
         db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, rows) {
             // if the database returns an error or an empty row set
@@ -274,7 +270,7 @@ exports.updateUser = function(userData, bearer, userId, done) {
                 // Return the done function with a 404 - Not Found code
                 return done(404);
             // If the tokens do not match
-            } else if (token !== rows[0]["auth_token"]) {
+            } else if (authToken !== rows[0]["auth_token"]) {
                 // Return the done function with a 403 - Forbidden code
                 return done(403);
             // If one or more of the required fields are missing, or incorrect

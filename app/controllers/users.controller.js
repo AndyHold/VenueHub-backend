@@ -46,25 +46,22 @@ exports.logout = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
-    // console.log(req.headers)
-    // // Get the bearer from the request headers
-    // const authToken = req.headers["x-authorization"];
-    // // Parse the id from the request parameters
-    // let id = req.params.id;
-    // // Call the model class to do the database querying and logic
-    // Users.getUser(id, authToken, function(code, userObj) {
-    //     // If the response code is an error
-    //     if (code === 404) {
-    //         // Send the response code
-    //         res.sendStatus(code);
-    //         // If the response code is a success
-    //     } else if (code === 200) {
-    //         // Send the code along with the user object
-    //         res.status(code).send(userObj);
-    //     }
-    // });
-    let heads = req.headers;
-    res.send({"username": heads["x-authorization"]});
+    // Get the bearer from the request headers
+    const authToken = req.headers["x-authorization"];
+    // Parse the id from the request parameters
+    let id = req.params.id;
+    // Call the model class to do the database querying and logic
+    Users.getUser(id, authToken, function(code, userObj) {
+        // If the response code is an error
+        if (code === 404) {
+            // Send the response code
+            res.sendStatus(code);
+            // If the response code is a success
+        } else if (code === 200) {
+            // Send the code along with the user object
+            res.status(code).send(userObj);
+        }
+    });
 };
 
 exports.updateUser = function(req, res) {

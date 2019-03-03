@@ -26,12 +26,12 @@ exports.catList = function(req, res) {
 };
 
 exports.create = function(req, res) {
-    // Get the bearer from the request headers
-    const bearer = req.headers["authorization"];
+    // Get the auth from the request headers
+    const authToken = req.headers["x-authorization"];
     // Get the venue data from the request body
     let venueData = req.body;
     // Call the model class to perform the logic and update the database
-    Venue.insert(bearer, venueData, function(code, result) {
+    Venue.insert(authToken, venueData, function(code, result) {
         // If the code returned is 201 - Created
         if (code === 201) {
             // Respond with the code and the venueId
@@ -63,12 +63,12 @@ exports.read = function(req, res) {
 
 exports.update = function(req, res) {
     // const id = req.params.id;
-    // // Get the bearer from the request headers
-    // const bearer = req.headers["authorization"];
+    // // Get the auth from the request headers
+    // const authToken = req.headers["authorization"];
     //
     // let venueData = req.body;
     //
-    // Venue.alter(bearer, venueData, id, function(result) {
+    // Venue.alter(authToken, venueData, id, function(result) {
     //     res.json(result);
     // });
     res.sendStatus(200);
