@@ -204,7 +204,7 @@ exports.logout = function(authHeader, done) {
                     // If the database returns an error
                     if (err) {
                         // Return the done function with code of 401
-                        return done(401);
+                        return done(402);
                         // Otherwise
                     } else {
                         // Return the done function with a code of 200
@@ -216,7 +216,7 @@ exports.logout = function(authHeader, done) {
         // Otherwise
     } else {
         // Return the done function with code of 401 and a null object
-        return done(401);
+        return done(403);
     }
 };
 
