@@ -166,7 +166,7 @@ exports.login = function(userData, done) {
                             //Otherwise
                         } else {
                             // Call the database to set the auth token for this user
-                            db.getPool().query('UPDATE User SET auth_token = ? WHERE user_id = ?', [[uid], [rows[0].user_id]], function (err) {
+                            db.getPool().query('UPDATE User SET auth_token=? WHERE user_id=?', [[uid], [rows[0].user_id]], function (err) {
                                 // If the database returns an error
                                 if (err) {
                                     // Return the done function with code of 400 and a null object
@@ -190,7 +190,7 @@ exports.logout = function(authHeader, done) {
     // If the bearer header type is not undefined
     if (typeof authHeader !== 'undefined') {
         // Call the database to get the user id corresponding to the token.
-        db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [authHeader], function (err, rows) {
+        db.getPool().query("SELECT user_id FROM User WHERE auth_token=?", [authHeader], function (err, rows) {
             // If the database returns an error or there are no users with the token
             if (err || rows.length === 0) {
                 // Return the done function with code of 401
@@ -204,7 +204,7 @@ exports.logout = function(authHeader, done) {
                     // If the database returns an error
                     if (err) {
                         // Return the done function with code of 401
-                        return done(402);
+                        return done(401);
                         // Otherwise
                     } else {
                         // Return the done function with a code of 200
@@ -216,20 +216,19 @@ exports.logout = function(authHeader, done) {
         // Otherwise
     } else {
         // Return the done function with code of 401 and a null object
-        return done(403);
+        return done(401);
     }
 };
 
-exports.getUser = function(userId, bearer, done) {
+exports.getUser = function(userId, authToken, done) {
     let userQuery = "SELECT username";
-    let token = "";
-    // If the bearer header type is not undefined
-    if (typeof bearer !== 'undefined') {
+    // If the auth header type is not undefined
+    if (typeof authToken === 'undefined') {
         // Parse the token from the bearer header
-        token = bearer.split(" ")[1];
+        authToken = "";
     }
     // Call the database to get the user id corresponding to the token.
-    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [token], function (err, rows) {
+    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
         // If the database returns an error
         if (err) {
             // Set rows to an empty array
