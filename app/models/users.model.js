@@ -116,7 +116,7 @@ exports.login = function(userData, done) {
         // Add the username to the username variable
         username = userData["username"];
         // Add the username to the query
-        queryString += "username=" + username;
+        queryString += "username=" + "'" + username + "'";
     // If the email was entered
     }
     if (userData.hasOwnProperty("email")) {
@@ -125,7 +125,7 @@ exports.login = function(userData, done) {
         // if the username isn't set
         if (!username) {
             // Add the email to the query
-            queryString += "email=" + email;
+            queryString += "email=" + "'" + email + "'";
         }
     }
     // If no username or email was sent
