@@ -36,9 +36,9 @@ exports.login = function(req, res) {
 
 exports.logout = function(req, res) {
     // Get the bearer from the request headers
-    const bearer = req.headers["authorization"];
+    const authHeader = req.headers["x-auth-header"];
     // Call the model class to do the database querying and logic
-    Users.logout(bearer, function(code) {
+    Users.logout(authHeader, function(code) {
         // Send the response with the given status code
         res.sendStatus(code);
     })

@@ -185,13 +185,12 @@ exports.login = function(userData, done) {
     });
 };
 
-exports.logout = function(bearer, done) {
+exports.logout = function(authHeader, done) {
+    console.log(authHeader);
     // If the bearer header type is not undefined
-    if (typeof bearer !== 'undefined') {
-        // Parse the token from the bearer header
-        const token = bearer.split(" ")[1];
+    if (typeof authHeader !== 'undefined') {
         // Call the database to get the user id corresponding to the token.
-        db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [token], function (err, rows) {
+        db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [authHeader], function (err, rows) {
             // If the database returns an error or there are no users with the token
             if (err || rows.length === 0) {
                 // Return the done function with code of 401
@@ -217,7 +216,7 @@ exports.logout = function(bearer, done) {
         // Otherwise
     } else {
         // Return the done function with code of 401 and a null object
-        return done(401, null);
+        return done(401);
     }
 };
 
