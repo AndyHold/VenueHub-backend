@@ -193,7 +193,7 @@ exports.logout = function(authHeader, done) {
             // If the database returns an error or there are no users with the token
             if (err || rows.length === 0) {
                 // Return the done function with code of 401
-                return done(401);
+                return done(402);
                 // Otherwise
             } else {
                 // Extract the user_id from the database rows
@@ -203,7 +203,7 @@ exports.logout = function(authHeader, done) {
                     // If the database returns an error
                     if (err) {
                         // Return the done function with code of 401
-                        return done(401);
+                        return done(403);
                         // Otherwise
                     } else {
                         // Return the done function with a code of 200
