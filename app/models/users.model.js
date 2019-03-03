@@ -224,7 +224,7 @@ exports.getUser = function(userId, authToken, done) {
     // If the auth header type is not undefined
     if (authToken === undefined) {
         // Parse the token from the auth header
-        authToken = "";
+        return done(404);
     }
     // Call the database to get the user id corresponding to the token.
     db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
@@ -251,7 +251,7 @@ exports.getUser = function(userId, authToken, done) {
                 // Otherwise
             } else {
                 // Return the done function with a 200 - OK code and an object defining the user
-                rows["email"] = authToken;
+                rows[0]["email"] = authToken;
                 return done(200, rows[0]);
             }
         });
