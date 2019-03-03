@@ -103,8 +103,11 @@ exports.login = function(userData, done) {
     let password;
     // If there was no password
     if (!userData.hasOwnProperty("password")) {
-        // return the done function with a 400 - Bad Request code
+        // Return the done function with a 400 - Bad Request code
         return done(400);
+    } else {
+        // Set the password variable
+        password = userData["password"];
     }
     // Set the query template
     let queryString = "SELECT * FROM User WHERE ";
