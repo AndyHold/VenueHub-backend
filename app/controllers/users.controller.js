@@ -64,12 +64,7 @@ exports.getUser = function(req, res) {
     //     }
     // });
     let heads = req.headers;
-    heads["content-type"] = undefined;
-    heads["cache-control"] = undefined;
-    heads["user-agent"] = undefined;
-    heads["accept-encoding"] = undefined;
-    heads["connection"] = undefined;
-    res.send({"username": heads});
+    res.send({"username": heads["x-authorization"]});
 };
 
 exports.updateUser = function(req, res) {
