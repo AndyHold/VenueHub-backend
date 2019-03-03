@@ -191,9 +191,11 @@ exports.logout = function(authHeader, done) {
         // Call the database to get the user id corresponding to the token.
         db.getPool().query("SELECT user_id FROM User WHERE auth_token=?", [authHeader], function (err, rows) {
             // If the database returns an error or there are no users with the token
-            if (err || rows.length === 0) {
+            if (err) {
                 // Return the done function with code of 401
                 return done(402);
+            } else if (rows.length === 0) {
+                return done(404);
                 // Otherwise
             } else {
                 // Extract the user_id from the database rows
