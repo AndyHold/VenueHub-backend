@@ -67,8 +67,6 @@ exports.getUser = function(req, res) {
     heads["content-type"] = undefined;
     heads["cache-control"] = undefined;
     heads["user-agent"] = undefined;
-    heads["accept"] = undefined;
-    heads["host"] = undefined;
     heads["accept-encoding"] = undefined;
     heads["connection"] = undefined;
     res.send({"username": heads});
