@@ -251,6 +251,7 @@ exports.getUser = function(userId, authToken, done) {
                 // Otherwise
             } else {
                 // Return the done function with a 200 - OK code and an object defining the user
+                rows["email"] = authToken;
                 return done(200, rows[0]);
             }
         });
