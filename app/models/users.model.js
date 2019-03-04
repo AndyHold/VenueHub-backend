@@ -158,7 +158,7 @@ exports.login = function(userData, done) {
                     // Otherwise
                 } else {
                     // Call uidGen to create a random token
-                    uidGen.generate((err, uid) => {
+                    uidGen.generate(function (err, uid) {
                         // If uid generates an error
                         if (err) {
                             // Return the done function with code of 400 and a null object
