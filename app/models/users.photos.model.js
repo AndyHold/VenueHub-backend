@@ -12,6 +12,7 @@ exports.getPhoto = function(id, done) {
 
 exports.setPhoto = function(id, photo, done) {
     // TODO Check if the given user has a profile photo already
+    // create a random filename instead of the given one as there are security risks.
         // delete it and replace it with the received one
     // else save the new photo
     db.get_pool().query('', function (err, rows) {
