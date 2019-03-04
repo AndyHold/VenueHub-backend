@@ -227,15 +227,15 @@ exports.getUser = function(userId, authToken, done) {
         authToken = "";
     }
     // Call the database to get the user id corresponding to the token.
-    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
+    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
         // If the database returns an error
         if (err) {
             // Set rows to an empty array
-            rows = [];
+            userRows = [];
             // Otherwise
         }
         // If the database returns a user and it matches the requested user
-        if (rows.length !== 0 && rows[0]["userId"] === userId) {
+        if (userRows.length !== 0 && userRows[0]["userId"] === userId) {
             // Add the email option to the user query along with the rest of the options
             userQuery += ", email, given_name AS givenName, family_name AS familyName FROM User WHERE user_id=?"
         } else {

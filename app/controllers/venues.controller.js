@@ -62,14 +62,15 @@ exports.read = function(req, res) {
 };
 
 exports.update = function(req, res) {
-    // const id = req.params.id;
-    // // Get the auth from the request headers
-    // const authToken = req.headers["authorization"];
-    //
-    // let venueData = req.body;
-    //
-    // Venue.alter(authToken, venueData, id, function(result) {
-    //     res.json(result);
-    // });
-    res.sendStatus(200);
+    // Get the venue id from the params
+    const venueId = parseInt(req.params.id);
+    // Get the auth from the request headers
+    const authToken = req.headers["x-authorization"];
+    // Get the venue data from the requestbody
+    let venueData = req.body;
+    // Call the model class to perform the logic and call the database
+    Venue.alter(authToken, venueData, venueId, function(code) {
+        // Send the code in the response
+        res.sendStatus(code);
+    });
 };

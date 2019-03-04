@@ -374,24 +374,81 @@ exports.insert = function(authToken, venueData, done) {
     }
 };
 
-exports.alter = function(authToken, venueData, done) {
-
+exports.alter = function(authToken, venueData, venueId, done) {
+    // Define a userId variable
+    let userId;
+    // Put the data into a values list
     let values = [
-        [venueData.venueName],
-        [venueData.categoryId],
-        [venueData.city],
-        [venueData.shortDescription],
-        [venueData.longDescription],
-        [venueData.address],
-        [venueData.latitude],
-        [venueData.longitude],
-        [id]
+        [venueData["venueName"]],
+        [venueData["categoryId"]],
+        [venueData["city"]],
+        [venueData["shortDescription"]],
+        [venueData["longDescription"]],
+        [venueData["address"]],
+        [venueData["latitude"]],
+        [venueData["longitude"]]
     ];
-
-    db.getPool().query('UPDATE Venue SET venue_name = ?, category_id = ?, city = ?, short_description = ?, long_description = ?, address = ?, latitude = ?, longitude = ?) WHERE venue_id = ?', values, function(err, result) {
-
-        if (err) return done(err);
-
-        done(result);
+    // If any of the given data is incorrect
+    if (!venueData.hasOwnProperty("venueName") || venueData["venueName"].length === 0 || venueData["venueName"].length > 64 ||
+        !venueData.hasOwnProperty("categoryId") || typeof venueData["categoryId"] !== "number" ||
+        !venueData.hasOwnProperty("city") || venueData["city"].length === 0 || venueData["city"].length > 128 ||
+        !venueData.hasOwnProperty("shortDescription") || venueData["shortDescription"].length === 0 || venueData["shortDescription"].length > 128 ||
+        !venueData.hasOwnProperty("longDescription") || venueData["longDescription"].length === 0 || venueData["longDescription"].length > 2048 ||
+        !venueData.hasOwnProperty("address") || venueData["address"].length === 0 || venueData["address"].length > 256 ||
+        !venueData.hasOwnProperty("longDescription") || venueData["longDescription"].length === 0 || venueData["longDescription"].length > 64 ||
+        !venueData.hasOwnProperty("latitude") || typeof venueData["categoryId"] !== "number" ||
+        !venueData.hasOwnProperty("longitude") || typeof venueData["categoryId"] !== "number") {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
+    // If the auth token doesn't exist
+    if (authToken === undefined) {
+        // Return the done function with a 401 - Unauthorized code
+        return done (400);
+    }
+    // Call the database to retrieve the user logged in with the given token
+    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
+        // If the database returned an error
+        if (err) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+        }
+        // If the returned rows are empty
+        if (userRows.length === 0) {
+            // Return the done function with a 401 - Unauthorized code
+            return done(401);
+        }
+        // Set the user id from the database to a variable
+        userId = userRows[0]["userId"];
+        // Call the database to check if the venue exists
+        db.getPool().query("SELECT admin_id AS adminId FROM Venue WHERE venue_id=?", [venueId], function (err, venueRows) {
+            // If the database returns an error
+            if (err) {
+                // Return the done function with a 400 - Bad Request code
+                return done(400);
+                // if the database returns no venues
+            } else if (venueRows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+                // If the user is not the admin of this venue
+            } else if (userId !== venueRows["adminId"]) {
+                // Return the done function with a 403 - Forbidden code
+                return done(403);
+                // Otherwise
+            } else {
+                // Call the database to update the venue details
+                db.getPool().query("UPDATE Venue SET venue_name=?, category_id=?, city=?, short_description=?, long_description=?, address=?, latitude=?, longitude=?, WHERE venue_id=?", values, function (err) {
+                    // If the database returns an error
+                    if (err) {
+                        // Return the done function with a 400 - Bad Request code
+                        return done(400);
+                        // Otherwise
+                    } else {
+                        // Return the done function with a 200 - OK code
+                        return done(200);
+                    }
+                });
+            }
+        });
     });
 };

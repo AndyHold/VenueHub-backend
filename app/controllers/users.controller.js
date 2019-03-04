@@ -41,17 +41,14 @@ exports.logout = function(req, res) {
     Users.logout(authHeader, function(code) {
         // Send the response with the given status code
         res.sendStatus(code);
-    })
-    console.log(req);
-    console.log(req.headers);
-
+    });
 };
 
 exports.getUser = function(req, res) {
     // Get the bearer from the request headers
     const authToken = req.headers["x-authorization"];
     // Parse the id from the request parameters
-    let id = req.params.id;
+    let id = parseInt(req.params.id);
     // Call the model class to do the database querying and logic
     Users.getUser(id, authToken, function(code, userObj) {
         // If the response code is an error
