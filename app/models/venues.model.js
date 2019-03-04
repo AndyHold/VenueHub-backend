@@ -361,7 +361,7 @@ exports.insert = function(authToken, venueData, done) {
                         // Otherwise
                         } else {
                             // Return the done function with a 201 - Created code and an object containing the new venue id
-                            return done(201, {"venueId": rows[0]["insertId"]});
+                            return done(201, {"venueId": rows["insertId"]});
                         }
                     });
                 }

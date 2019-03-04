@@ -23,7 +23,7 @@ exports.createReview = function(req, res) {
     // let venueId = req.params.id;
     //
     // let review_data = req.body;
-    // let userId = null; // TODO where do i get the user id number from???
+    // let userId = null;
     //
     // let values = [
     //     [venueId],
