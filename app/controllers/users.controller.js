@@ -42,6 +42,8 @@ exports.logout = function(req, res) {
         // Send the response with the given status code
         res.sendStatus(code);
     })
+    console.log(req);
+    console.log(req.headers);
 
 };
 
