@@ -62,11 +62,8 @@ exports.getReviewsFromUser = function(userId, done) {
                         "WHERE Venue.venue_id=?", [reviewRows[i]["venue"]], function (err, venueRows) {
                         // If the database doesn't return an error
                         if (!err) {
-                            console.log(1);
                             // Update the venue in the reviewRows
                             reviewRows[i]["venue"] = venueRows[0];
-                        } else {
-                            console.log(err);
                         }
                         // If this is the last review in the list
                         if (i === reviewRows.length - 1) {
@@ -90,9 +87,9 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
     ];
     let userId;
     // If the data sent in the request is incorrect
-    if (!reviewData.hasOwnProperty("reviewBody") || reviewData["reviewBody"].length === 0 || reviedData["reviewBody"].length > 1024 ||
-        !reviewData.hasOwnProperty("starRating") || typeof reviewData["starRating"] === "number" ||
-        !reviewData.hasOwnProperty("costRating") || typeof reviewData["costRating"] === "number") {
+    if (!reviewData.hasOwnProperty("reviewBody") || reviewData["reviewBody"].length === 0 || reviewData["reviewBody"].length > 1024 ||
+        !reviewData.hasOwnProperty("starRating") || typeof reviewData["starRating"] !== "number" ||
+        !reviewData.hasOwnProperty("costRating") || typeof reviewData["costRating"] !== "number") {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     }
@@ -119,7 +116,7 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
         // Call the database to get the venue details
         db.getPool().query("SELECT admin_id FROM Venue WHERE venue_id=?", [venueId], function(err, venueRows) {
             // If the database returns an error or the venue doesn't exist (has empty rows)
-            if (err, venueRows.length === 0) {
+            if (err || venueRows.length === 0) {
                 // Return the done function with a 400 - Bad Request code
                 return done(400);
                 // If the logged in user is the admin
@@ -139,7 +136,7 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
                     return done(403);
                 } else {
                     // Call the database to insert the review
-                    db.getPool().query("INSERT INTO Review (review_body, star_rating, cost_rating, reviewed_venue_id, reviewed_author_id) VALUES ?, ?, ?, ?, ?", values, function (err) {
+                    db.getPool().query("INSERT INTO Review (review_body, star_rating, cost_rating, reviewed_venue_id, review_author_id) VALUES (?, ?, ?, ?, ?)", values, function (err) {
                         // If the database returns an error
                         if (err) {
                             // Return the done function with a 400 - Bad Request code

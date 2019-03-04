@@ -2,7 +2,7 @@ const Review = require('../models/venues.reviews.model');
 
 exports.listFromVenue = function(req, res) {
     // Get the venue id from the parameters
-    let venueId = req.params.id;
+    let venueId = parseInt(req.params.id);
     // Call the model class to perform the logic and call the database.
     Review.getReviewsFromVenue(venueId, function(code, result) {
         // If the return code is 404 - Not Found
@@ -19,7 +19,7 @@ exports.listFromVenue = function(req, res) {
 
 exports.listFromUser = function(req, res) {
     // Get the user id from the parameters
-    let userId = req.params.id;
+    let userId = parseInt(req.params.id);
     // Call the model class to perform the logic and call the database.
     Review.getReviewsFromUser(userId, function(code, result) {
         // If the return code is 404 - Not Found
@@ -36,7 +36,7 @@ exports.listFromUser = function(req, res) {
 
 exports.createReview = function(req, res) {
     // Get the venue ID from the params
-    let venueId = req.params.id;
+    let venueId = parseInt(req.params.id);
     // Get the review data from the body
     let reviewData = req.body;
     // Get the auth token from the headers
