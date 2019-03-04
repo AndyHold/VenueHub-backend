@@ -80,12 +80,78 @@ exports.getReviewsFromUser = function(userId, done) {
     });
 };
 
-exports.insertReview = function(values, done) {
-
-    db.getPool().query('INSERT INTO Review (reviewed_venue_id, review_author_id, review_body, star_rating, cost_rating) VALUES (?, ?, ?, ?, ?', values, function(err, result) {
-
-        if (err) return done(err);
-
-        done(result);
+exports.insertReview = function(venueId, reviewData, authToken, done) {
+    // Parse the values from reviewData
+    let values = [
+        [reviewData.reviewBody],
+        [reviewData.starRating],
+        [reviewData.costRating],
+        [venueId]
+    ];
+    let userId;
+    // If the data sent in the request is incorrect
+    if (!reviewData.hasOwnProperty("reviewBody") || reviewData["reviewBody"].length === 0 || reviedData["reviewBody"].length > 1024 ||
+        !reviewData.hasOwnProperty("starRating") || typeof reviewData["starRating"] === "number" ||
+        !reviewData.hasOwnProperty("costRating") || typeof reviewData["costRating"] === "number") {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
+    // If the authToken was not sent
+    if (authToken === undefined) {
+        // Return the done function with a 401 - Forbidden code
+        return done(401);
+    }
+    // Call the database to get the userId logged in with the given token
+    db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
+        // If the database returns an error
+        if (err) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+            // If the database doesn't return a user
+        } else if (userRows.length === 0) {
+            // Return the done function with a 401 - Forbidden code
+            return done(401);
+        }
+        // Set the userId as that of the logged in user
+        userId = userRows[0]["userId"];
+        // Add the userId to the values list;
+        values.push([userId]);
+        // Call the database to get the venue details
+        db.getPool().query("SELECT admin_id FROM Venue WHERE venue_id=?", [venueId], function(err, venueRows) {
+            // If the database returns an error or the venue doesn't exist (has empty rows)
+            if (err, venueRows.length === 0) {
+                // Return the done function with a 400 - Bad Request code
+                return done(400);
+                // If the logged in user is the admin
+            } else if (venueRows[0]["admin_id"] === userId){
+                // Return the done function with a 403 - Unauthorized code
+                return done(403);
+            }
+            // Call the database to see if the user has already reviewed this venue
+            db.getPool().query("SELECT * FROM Review WHERE reviewed_venue_id=? AND review_author_id=?", [[venueId], [userId]], function(err, reviewRows) {
+                // If the database returns an error
+                if (err) {
+                    // Return the done function with a 400 - Bad Request code
+                    return done(400);
+                    // If the user has already reviewed this venue (rows are not empty)
+                } else if (reviewRows.length !== 0) {
+                    // Return the done function with a 403 - Unauthorized code
+                    return done(403);
+                } else {
+                    // Call the database to insert the review
+                    db.getPool().query("INSERT INTO Review (review_body, star_rating, cost_rating, reviewed_venue_id, reviewed_author_id) VALUES ?, ?, ?, ?, ?", values, function (err) {
+                        // If the database returns an error
+                        if (err) {
+                            // Return the done function with a 400 - Bad Request code
+                            return done(400);
+                            // Otherwise
+                        } else {
+                            // Return the done function with a 201 - Created code
+                            return done(200);
+                        }
+                    });
+                }
+            });
+        });
     });
 };

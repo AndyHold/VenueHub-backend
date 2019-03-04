@@ -321,13 +321,13 @@ exports.insert = function(authToken, venueData, done) {
     ];
     // If any of the necessary values are missing or incorrect
     if (!(venueData.hasOwnProperty("venueName") && typeof venueData["venueName"] === typeof "" && venueData["venueName"].length !== 0) ||
-        !(venueData.hasOwnProperty("categoryId") && typeof venueData["categoryId"] === typeof 0) ||
+        !(venueData.hasOwnProperty("categoryId") && typeof venueData["categoryId"] === "number") ||
         !(venueData.hasOwnProperty("city") && typeof venueData["city"] === typeof "" && venueData["city"].length !== 0) ||
         !(venueData.hasOwnProperty("shortDescription") && typeof venueData["shortDescription"] === typeof "" && venueData["shortDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("longDescription") && typeof venueData["longDescription"] === typeof "" && venueData["longDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("address") && typeof venueData["address"] === typeof "" && venueData["address"].length !== 0) ||
-        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === typeof 0.1) ||
-        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === typeof 0.1)) {
+        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === "number") ||
+        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number")) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     // Otherwise

@@ -35,20 +35,15 @@ exports.listFromUser = function(req, res) {
 };
 
 exports.createReview = function(req, res) {
-    // let venueId = req.params.id;
-    //
-    // let review_data = req.body;
-    // let userId = null;
-    //
-    // let values = [
-    //     [venueId],
-    //     [userId],
-    //     [review_data.reviewBody],
-    //     [review_data.starRating],
-    //     [review_data.costRating]
-    // ];
-    // Review.insertReview(values, function(result) {
-    //     res.json(result);
-    // });
-    res.sendStatus(200);
+    // Get the venue ID from the params
+    let venueId = req.params.id;
+    // Get the review data from the body
+    let reviewData = req.body;
+    // Get the auth token from the headers
+    let authToken = req.headers["x-authorization"];
+    // Call the model class to perform the logic and call the database
+    Review.insertReview(venueId, reviewData, authToken, function(code) {
+        // Send the response code
+        res.sendStatus(code);
+    });
 };
