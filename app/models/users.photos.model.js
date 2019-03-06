@@ -4,6 +4,18 @@ const uidGenerator = require('uid-generator');
 const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 const photoDir = __dirname + "/../user-photos/";
 
+let generateFilename = function (done) {
+    uidGen.generate( function (err, filename) {
+        // If the filename is already in use or there is an error
+        if (err || filesystem.existsSync(photoDir + filename + ".jpeg") || filesystem.existsSync(photoDir + filename + ".png")) {
+            // Recursively request another filename
+            return generateFilename(done);
+        } else {
+            return done(filename);
+        }
+    });
+};
+
 exports.getPhoto = function(userId, done) {
     // Call the database to retrieve the filename of the users photo
     db.getPool().query('SELECT profile_photo_filename AS filename FROM User WHERE user_id=?', [userId], function (err, rows) {
@@ -24,18 +36,6 @@ exports.getPhoto = function(userId, done) {
                     return done(200, data);
                 }
             });
-        }
-    });
-};
-
-let generateFilename = function (done) {
-    uidGen.generate( function (err, filename) {
-        // If the filename is already in use
-        if (filesystem.existsSync(photoDir + filename + ".jpeg") || filesystem.existsSync(photoDir + filename + ".png")) {
-            // Recursively request another filename
-            return generateFilename(done);
-        } else {
-            return done(filename);
         }
     });
 };

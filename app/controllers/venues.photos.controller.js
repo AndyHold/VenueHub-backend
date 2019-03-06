@@ -1,28 +1,18 @@
 const Photo = require('../models/venues.photos.model');
-const fileSystem = require("fs");
 
 exports.create = function(req, res) {
-    // let venueId = req.params.id,
-    //     filename = req.params.photoFileName;
-    // let photo_data = req.body;
-    //
-    // let photo = photo_data.photo; // TODO Does this work?
-    // fileSystem.writeFile("venue_photos\\" + venueId + "\\" + filename, photo, function(err) {
-    //     if (err) throw err;
-    // });
-    //
-    // let values = [
-    //     [venueId],
-    //     [filename],
-    //     [photo_data.description],
-    //     [photo_data.makePrimary]
-    // ];
-    //
-    // Photo.insert(values, function(result) {
-    //     res.sendStatus(200);
-    // });
-
-    res.sendStatus(200);
+    // Get the venue id from the params
+    let venueId = req.params.id;
+    // Get the photo data from the body
+    let photoData = req.body;
+    console.log(photoData);
+    // Get the auth token from the headers
+    let authToken = req.headers["x-authorization"];
+    // Call the model class to perform the logic and call the database
+    Photo.insert(venueId, photoData, authToken, function(code) {
+        // Send the status code via the response
+        res.sendStatus(code);
+    });
 };
 
 exports.read = function(req, res) {
