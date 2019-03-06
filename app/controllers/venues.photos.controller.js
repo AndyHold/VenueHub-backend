@@ -46,11 +46,14 @@ exports.delete = function(req, res) {
 };
 
 exports.primary = function(req, res) {
-    // let venueId = req.params.id,
-    //     filename = req.params.photoFileName;
-    //
-    // Photo.setPrimary(venueId, filename, function(result) {
-    //     res.json(result);
-    // });
-    res.sendStatus(200);
+    // Get the venue id and the filename from the params
+    let venueId = req.params.id;
+    let filename = req.params.photoFileName;
+    // Get the auth token from the headers
+    let authToken = req.headers["x-authorization"];
+    // Call the model class to perform the logic and call the database
+    Photo.setPrimary(venueId, filename, authToken, function(code) {
+        // Send the status code via the response
+        res.sendStatus(code);
+    });
 };

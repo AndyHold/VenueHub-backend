@@ -118,15 +118,38 @@ exports.remove = function(values, done) {
     });
 };
 
-exports.setPrimary = function(venueId, filename, done) {
-    db.getPool().query("UPDATE VenuePhoto SET is_primary = 0 WHERE venue_id = ?", [[venueId]], function(err) {
-
-        if (err) return done(err);
-    });
-    db.getPool().query("UPDATE VenuePhoto SET is_primary = 1 WHERE venue_id = ? AND photo_filename = ?", [[venueId], [filename]], function(err, result) {
-
-        if (err) return done(err);
-
-        done(result);
+exports.setPrimary = function(venueId, filename, authToken, done) {
+    // If there is no auth token
+    if (authToken === undefined) {
+        // Return the done function with a 401 - Unauthorized code
+        return done(401);
+    }
+    // Call the database to get the venue and admin details.
+    db.getPool().query("SELECT auth_token AS authToken FROM Venue JOIN User ON user_id=admin_id WHERE venue_id=?", [venueId], function (err, adminRows) {
+        // If the database returns an error or empty rows
+        if (err || adminRows.length === 0) {
+            // Return the done function with a 404 - Not Found code
+            return done(404);
+            // If the auth token doesn't match the users token
+        } else if (authToken !== adminRows[0]["authToken"]) {
+            // Return the done function with a 403 - Forbidden code
+            return done(403);
+        }
+        // Call the database to get the photo details
+        db.getPool().query("SELECT * FROM VenuePhoto WHERE venue_id=? AND photo_filename=?", [[venueId], [filename]], function (err, photoRows) {
+            // If the database returns an error or the rows are empty
+            if (err || photoRows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+            }
+            // Call the database to set all the venues photos to not primary
+            db.getPool().query("UPDATE VenuePhoto SET is_primary=false WHERE venue_id=?", [venueId], function () {
+                // Call the database to set the selected file to primary
+                db.getPool().query("UPDATE VenuePhoto SET is_primary=true WHERE venue_id=? AND photo_filename=?", [[venueId], [filename]], function () {
+                    // Return the done function with a 200 - OK code
+                    return done(200);
+                });
+            });
+        });
     });
 };

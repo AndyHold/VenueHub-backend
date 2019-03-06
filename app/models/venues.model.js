@@ -345,7 +345,7 @@ exports.insert = function(authToken, venueData, done) {
                 // If the rows are empty (there is no user logged in with this token)
                 if (rows.length === 0) {
                     // Return the done function with a 403 - Unauthorized code
-                    return done(403)
+                    return done(403); // TODO ask about this in the lab.
                 // Otherwise
                 } else {
                     // Extract the user id from the rows
