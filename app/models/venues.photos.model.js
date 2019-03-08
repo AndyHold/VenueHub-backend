@@ -16,8 +16,26 @@ let generateFilename = function (done) {
     });
 };
 
-exports.getPhoto = function(values, done) {
-    // TODO implement this
+exports.getPhoto = function(venueId, filename, done) {
+    // Call the database to get the photo data
+    db.getPool().query("SELECT * FROM VenuePhoto WHERE venue_id=? AND photo_filename=?", [[venueId], [filename]], function (err, rows) {
+        // If the rows are empty or the database returns an error
+        if (err || rows.length === 0) {
+            // Return the done function with a 404 - Not Found code
+            return done(404);
+        }
+        // Call the filesystem to retrieve the photo
+        filesystem.readFile(photoDir + filename, function (err, photoData) {
+            // If the filesystem returns an error
+            if (err) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+            } else {
+                // Return the done function with a 200 - OK code and the photo data
+                return done(200, photoData);
+            }
+        });
+    });
 };
 
 exports.insert = function(venueId, photoData, authToken, done) {
@@ -146,7 +164,7 @@ exports.remove = function(venueId, filename, authToken, done) {
                     // If the photo was primary and there was more than one photo for this venue
                     if (photoRows[0]["is_primary"] || venueRows.length > 1) {
                         // Call the database to select a random photo from this venue
-                        db.getPool().query("SELECT photo_filename FROM VenuePhoto WHERE venue_id=? ORDER BY RAND() LIMIT 1;", [venueId], function (err, randomPhoto) {
+                        db.getPool().query("SELECT photo_filename FROM VenuePhoto WHERE venue_id=? ORDER BY RAND() LIMIT 1", [venueId], function (err, randomPhoto) {
                             // Call the database to set the value of this photo to primary
                             db.getPool().query("UPDATE VenuePhoto SET is_primary=true WHERE photo_filename=?", [randomPhoto[0]["photo_filename"]], function () {
                                 // Call the filesystem to delete the old photo

@@ -16,18 +16,21 @@ exports.create = function(req, res) {
 };
 
 exports.read = function(req, res) {
-    // let venueId = req.params.id,
-    //     filename = req.params.photoFileName;
-    //
-    // let values = [
-    //     [venueId],
-    //     [filename]
-    // ];
-    //
-    // Photo.getPhoto(values, function(result) {
-    //     res.send(result);
-    // });
-    res.sendStatus(200);
+    // Get the venue ID from the request params
+    let venueId = req.params.id;
+    // Get the filename form the request params
+    let filename = req.params.photoFileName;
+    // Call the model class to perform the logic and call the database
+    Photo.getPhoto(venueId, filename, function(code, result) {
+        // If the code is 404 - Not Found
+        if (code === 404) {
+            // Send the code in the response
+            res.sendStatus(code);
+        } else {
+            // Send the code and the photo data in the response
+            res.status(code).send(result);
+        }
+    });
 };
 
 exports.delete = function(req, res) {
