@@ -1,4 +1,5 @@
 const db = require('../../config/db');
+const filesystem = require("fs");
 const photoDir = __dirname + "/venue-photos/";
 const uidGenerator = require('uid-generator');
 const uidGen = new uidGenerator(uidGenerator.BASE58,32);
@@ -109,12 +110,56 @@ exports.insert = function(venueId, photoData, authToken, done) {
     });
 };
 
-exports.remove = function(values, done) {
-    db.get_pool().query('DELETE FROM VenuePhoto WHERE venue_id = ? AND photo_filename = ?', values, function(err, result) {
-
-        if (err) return done(err);
-
-        done(result);
+exports.remove = function(venueId, filename, authToken, done) {
+    // If the token was not sent in the headers
+    if (authToken === undefined) {
+        // Return the done function with a 401 - Unauthorized code
+        return done(401);
+    }
+    // Call the database to retrieve the venue data
+    db.getPool().query("SELECT admin_id, photo_filename FROM Venue JOIN VenuePhoto " +
+        "ON Venue.venue_id=VenuePhoto.venue_id WHERE venue_id=?", [venueId], function (err, venueRows) {
+        // If the database returned an error or empty rows
+        if(err || venueRows.length === 0) {
+            // return the done function with a 404 - Not Found code
+            return done(404);
+        }
+        // Call the database to get the admin users token
+        db.getPool().query("SELECT auth_token FROM User WHERE user_id=?"
+            , [venueRows[0]["admin_id"]], function (err, adminRows) {
+            // If the admin token does not match the current users token
+            if (authToken !== adminRows[0]["auth_token"]) {
+                // Return the done function with a 403 - Forbidden code
+                return done(403);
+            }
+            // Call the database to get the photo's details
+            db.getPool().query("SELECT is_primary FROM VenuePhoto WHERE photo_filename=?"
+                , [filename], function (err, photoRows) {
+                // If the database returns an error or the rows are empty
+                if (err || photoRows.length === 0) {
+                    // Return the done function with a 404 - Not Found error
+                    return done(404);
+                    // If the photo is primary and there are more than one photo for this venue
+                }
+                // Call the database to delete the photo
+                db.getPool().query("DELETE FROM VenuePhoto WHERE photo_filename=?", [filename], function () {
+                    // If the photo was primary and there was more than one photo for this venue
+                    if (photoRows[0]["is_primary"] || venueRows.length > 1) {
+                        // Call the database to select a random photo from this venue
+                        db.getPool().query("SELECT photo_filename FROM VenuePhoto WHERE venue_id=? ORDER BY RAND() LIMIT 1;", [venueId], function (err, randomPhoto) {
+                            // Call the database to set the value of this photo to primary
+                            db.getPool().query("UPDATE VenuePhoto SET is_primary=true WHERE photo_filename=?", [randomPhoto[0]["photo_filename"]], function () {
+                                // Call the filesystem to delete the old photo
+                                filesystem.unlink(photoDir + filename, function () {
+                                    // Return the done function with a 200 - OK code
+                                    return done(200);
+                                });
+                            });
+                        });
+                    }
+                });
+            });
+        });
     });
 };
 

@@ -25,24 +25,23 @@ exports.read = function(req, res) {
     // ];
     //
     // Photo.getPhoto(values, function(result) {
-    //     res.send(result); // TODO is this correct?
+    //     res.send(result);
     // });
     res.sendStatus(200);
 };
 
 exports.delete = function(req, res) {
-    // let venueId = req.params.id,
-    //     filename = req.params.photoFileName;
-    //
-    // let values = [
-    //     [venueId],
-    //     [filename]
-    // ];
-    //
-    // Photo.remove(values, function(result) {
-    //     res.json(result);
-    // });
-    res.sendStatus(200);
+    // Get the venue Id from the params
+    let venueId = req.params.id;
+    // Get the filename from the params
+    let filename = req.params.photoFileName;
+    // Get the auth token from the headers
+    let authToken = req.headers["x-authorization"];
+    // Call the model class to perform the logic and call the database
+    Photo.remove(venueId, filename, authToken, function(code) {
+        // Send the code in the response
+        res.sendStatus(code);
+    });
 };
 
 exports.primary = function(req, res) {
