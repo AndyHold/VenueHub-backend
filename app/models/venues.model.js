@@ -411,7 +411,7 @@ exports.alter = function(authToken, venueData, venueId, done) {
     // If the auth token doesn't exist
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
-        return done (400);
+        return done (401);
     }
     // Call the database to retrieve the user logged in with the given token
     db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
