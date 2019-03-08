@@ -332,45 +332,53 @@ exports.insert = function(authToken, venueData, done) {
         return done(400);
     // Otherwise
     } else {
-        // If the auth header type is not undefined
-        if (authToken !== undefined) {
-            // Call the database to retrieve the user associated with this token
-            db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
-                // If the database returns an error
-                if (err) {
-                    // Set rows to an empty array
-                    rows = [];
-                    // Otherwise
-                }
-                // If the rows are empty (there is no user logged in with this token)
-                if (rows.length === 0) {
-                    // Return the done function with a 403 - Unauthorized code
-                    return done(403); // TODO ask about this in the lab.
-                // Otherwise
-                } else {
-                    // Extract the user id from the rows
-                    let userId = rows[0]["userId"];
-                    // Push the userId onto the values array
-                    values.push([userId]);
-                    // Call the database to insert the new venue
-                    db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
-                        // If the database returns an error
-                        if (err) {
-                            // Return the done function with a 400 - Bad Request code
-                            return done(400);
+        // Call the database to get the category Id
+        db.getPool().query("SELECT * FROM Category WHERE category_id=?", [venueData["categoryId"]], function (err, categoryRows) {
+            // If the category does not exist (the rows are empty)
+            if (categoryRows.length === 0) {
+                // Return the done function with a 400 - Bad Request code
+                return done(400);
+            }
+            // If the auth header type is not undefined
+            if (authToken !== undefined) {
+                // Call the database to retrieve the user associated with this token
+                db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
+                    // If the database returns an error
+                    if (err) {
+                        // Set rows to an empty array
+                        rows = [];
                         // Otherwise
-                        } else {
-                            // Return the done function with a 201 - Created code and an object containing the new venue id
-                            return done(201, {"venueId": rows["insertId"]});
-                        }
-                    });
-                }
-            });
-        // Otherwise
-        } else {
-            // Return the done function with a 401 - Unauthorized code
-            return done(401);
-        }
+                    }
+                    // If the rows are empty (there is no user logged in with this token)
+                    if (rows.length === 0) {
+                        // Return the done function with a 403 - Unauthorized code
+                        return done(401);
+                        // Otherwise
+                    } else {
+                        // Extract the user id from the rows
+                        let userId = rows[0]["userId"];
+                        // Push the userId onto the values array
+                        values.push([userId]);
+                        // Call the database to insert the new venue
+                        db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
+                            // If the database returns an error
+                            if (err) {
+                                // Return the done function with a 400 - Bad Request code
+                                return done(400);
+                                // Otherwise
+                            } else {
+                                // Return the done function with a 201 - Created code and an object containing the new venue id
+                                return done(201, {"venueId": rows["insertId"]});
+                            }
+                        });
+                    }
+                });
+                // Otherwise
+            } else {
+                // Return the done function with a 401 - Unauthorized code
+                return done(401);
+            }
+        });
     }
 };
 
