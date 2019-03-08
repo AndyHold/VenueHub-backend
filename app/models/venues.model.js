@@ -41,7 +41,7 @@ exports.getVenues = function(queries, done) {
             queryBody += "WHERE";
         }
         // Add the query to the queryBody
-        queryBody += " venueName LIKE '%" + queries["q"] + "%'"; // TODO what is the title? name or desription?
+        queryBody += " venueName LIKE '%" + queries["q"] + "%'";
     }
     // If categoryId is a query option
     if (queries.hasOwnProperty("categoryId")) {
@@ -59,6 +59,11 @@ exports.getVenues = function(queries, done) {
     }
     // If minStarRating is a query option
     if (queries.hasOwnProperty("minStarRating")) {
+        // If the min star rating is not in an appropriate range
+        if (queries["minStarRating"] > 5 || queries["minStarRating"] < 1) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+        }
         // If the queryBody has been started already
         if (queryBody.length > 0) {
             // add an AND keyword for the next statement
@@ -73,6 +78,11 @@ exports.getVenues = function(queries, done) {
     }
     // If maxCostRating is a query option
     if (queries.hasOwnProperty( "maxCostRating")) {
+        // If the max cost rating is not in an appropriate range
+        if (queries["maxCostRating"] > 4 || queries["maxCostRating"] < 0) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+        }
         // If the queryBody has been started already
         if (queryBody.length > 0) {
             // add an AND keyword for the next statement
@@ -326,14 +336,14 @@ exports.insert = function(authToken, venueData, done) {
         !(venueData.hasOwnProperty("shortDescription") && typeof venueData["shortDescription"] === typeof "" && venueData["shortDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("longDescription") && typeof venueData["longDescription"] === typeof "" && venueData["longDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("address") && typeof venueData["address"] === typeof "" && venueData["address"].length !== 0) ||
-        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === "number") ||
-        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number")) {
+        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === "number") || Math.abs(parseFloat(venueData["latitude"])) > 90 ||
+        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number")  || Math.abs(parseFloat(venueData["longitude"])) > 180) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     // Otherwise
     } else {
         // Call the database to get the category Id
-        db.getPool().query("SELECT * FROM Category WHERE category_id=?", [venueData["categoryId"]], function (err, categoryRows) {
+        db.getPool().query("SELECT * FROM VenueCategory WHERE category_id=?", [venueData["categoryId"]], function (err, categoryRows) {
             // If the category does not exist (the rows are empty)
             if (categoryRows.length === 0) {
                 // Return the done function with a 400 - Bad Request code

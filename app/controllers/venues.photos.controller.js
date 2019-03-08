@@ -4,8 +4,7 @@ exports.create = function(req, res) {
     // Get the venue id from the params
     let venueId = req.params.id;
     // Get the photo data from the body
-    let photoData = req.body;
-    console.log(photoData);
+    let photoData = req.body; // TODO ask at the lab why this isn't working
     // Get the auth token from the headers
     let authToken = req.headers["x-authorization"];
     // Call the model class to perform the logic and call the database

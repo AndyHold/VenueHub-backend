@@ -86,7 +86,6 @@ exports.insert = function(venueId, photoData, authToken, done) {
                         // Push isPrimary onto the values list and set it to the isPrimary list
                         values.push(photoData["isPrimary"]);
                         isPrimary = photoData["isPrimary"];
-                        console.log(photoData["isPrimary"]); // TODO remove this.
                     } else {
                         // Push false to the values list as the default is primary value.
                         values.push([false]);
