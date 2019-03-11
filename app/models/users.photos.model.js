@@ -84,7 +84,8 @@ exports.setPhoto = function(userId, authToken, contentType, picData, done) {
                     // If the filesystem does not return an error
                     if (!err) {
                         // Call the filesystem to delete the old file
-                        filesystem.unlink(".Photos/" + userRows["filename"], function () {
+                        filesystem.unlink(photoDir + userRows["filename"], function () {
+
                             // Call the database to replace the filename
                             db.getPool().query("UPDATE User SET profile_photo_filename=? WHERE user_id=?", [[filename], [userId]], function () {
                                 // Return the done function with a 200 - OK code

@@ -77,7 +77,7 @@ exports.register = function(userData, done) {
                             // Otherwise
                         } else {
                             // Call the database to get the generated user_id for the newly created user.
-                            db.getPool().query("SELECT user_id FROM User WHERE username = ?", values, function (err, rows) {
+                            db.getPool().query("SELECT user_id FROM User WHERE username=?", values, function (err, rows) {
                                 // If the database returns an error
                                 if (err) {
                                     // Return the done function with code of 400 and a null object
