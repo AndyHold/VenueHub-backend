@@ -367,10 +367,13 @@ exports.insert = function (authToken, venueData, done) {
                     } else {
                         // Extract the user id from the rows
                         let userId = rows[0]["userId"];
-                        // Push the userId onto the values array
+                        // Get the current time
+                        let currentDate = Date();
+                        // Push the userId and the current date onto the values array
                         values.push([userId]);
+                        values.push([currentDate]);
                         // Call the database to insert the new venue
-                        db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
+                        db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
                             // If the database returns an error
                             if (err) {
                                 // Return the done function with a 400 - Bad Request code
