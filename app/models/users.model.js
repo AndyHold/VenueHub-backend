@@ -288,7 +288,7 @@ exports.updateUser = function(userData, authToken, userId, done) {
                         return done(400);
                     } else {
                         // Call the database to update the users records
-                        db.getPool().query("UPDATE User SET given_name=?, family_name=?, password=?, WHERE user_id=?", [[userData["givenName"]], [userData["familyName"]], [hash], [userId]], function (err) {
+                        db.getPool().query("UPDATE User SET given_name=?, family_name=?, password=? WHERE user_id=?", [[userData["givenName"]], [userData["familyName"]], [hash], [userId]], function (err) {
                             // If the database returns an error
                             if (err) {
                                 // Return the done function with a 400 - Bad Request code

@@ -13,7 +13,7 @@ exports.getPhoto = function(req, res) {
         } else {
             // Send the code and the resulting object with the type header
             res.setHeader("Content-Type", "image/" + imgtype);
-            res.status(code).send(result); // TODO not sure if this is correct...?
+            res.status(code).send(result);
         }
     });
 };
