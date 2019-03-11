@@ -16,8 +16,8 @@ module.exports = function () {
     app.use(allowCrossOriginRequests);
     app.use(bodyParser.json());
     app.use(bodyParser.raw({type: 'text/plain'}));  // for the /executeSql endpoint
-    app.use(bodyParser.raw({type: 'image/jpg', limit: '5mb'}));  // for the /executeSql endpoint
-    app.use(bodyParser.raw({type: 'image/png', limit: '5mb'}));  // for the /executeSql endpoint
+    app.use(bodyParser.raw({type: 'image/jpeg', limit: '5mb'}));
+    app.use(bodyParser.raw({type: 'image/png', limit: '5mb'}));
 
     // ROUTES
     require('../app/routes/backdoor.routes')(app);
