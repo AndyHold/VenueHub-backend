@@ -339,7 +339,6 @@ exports.updateUser = function(userData, authToken, userId, done) {
                 db.getPool().query(queryData.updateQuery, [userId], function (err) {
                     // If the database returns an error
                     if (err) {
-                        console.log(err);
                         // Return the done function with a 400 - Bad Request code
                         return done(400);
                     } else {
