@@ -272,7 +272,6 @@ exports.getOne = function (venueId, done) {
             db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [venueRows[0]["admin"]], function (err, adminRows) {
                 // If the database returns an error or the rows are empty
                 if (err || adminRows.length === 0) {
-                    console.log(adminRows);
                     // Return the done function with a 404 - Not Found code
                     return done(404);
                     // Otherwise
@@ -284,7 +283,6 @@ exports.getOne = function (venueId, done) {
                         "category_description AS categoryDescription FROM VenueCategory WHERE category_id=?", [venueRows[0]["category"]], function (err, categoryRows) {
                         // If the database returns an error or the rows are empty
                         if (err || categoryRows.length === 0) {
-                            console.log(err);
                             // Return the done function with a 404 - Not Found code
                             return done(404);
                             // Otherwise
@@ -297,7 +295,6 @@ exports.getOne = function (venueId, done) {
                                 "WHERE venue_id=?", [venueId], function (err, photoRows) {
                                 // If the database returns an error or the rows are empty
                                 if (err) {
-                                    console.log(err);
                                     // Return the done function with a 404 - Not Found code
                                     return done(404);
                                     // Otherwise
@@ -369,7 +366,6 @@ exports.insert = function (authToken, venueData, done) {
                         let userId = rows[0]["userId"];
                         // Get the current time
                         let currentDate = new Date();
-                        console.log(currentDate);
                         // Push the userId and the current date onto the values array
                         values.push([userId]);
                         values.push([currentDate]);
@@ -396,18 +392,24 @@ exports.insert = function (authToken, venueData, done) {
     }
 };
 
-let validateField = function (venueData, queryData, fieldCamel, fieldDatabase) {
+let validateField = function (venueData, queryData, fieldCamel, fieldDatabase, isNumeric) {
     // If the venue name is to be changed
     if (venueData.hasOwnProperty(fieldCamel)) {
-        // Set valid request to true (this is
-        queryData.isValidRequestField = true;
         // If the query already has a valid request field
         if (queryData.isValidRequestField) {
             // Add a coma separator to the query
             queryData.updateQuery += ", ";
+        } else {
+            // Set valid request to true
+            queryData.isValidRequestField = true;
         }
         // Add the field to the query
-        queryData.updateQuery += fieldDatabase + "=" + venueData[fieldCamel];
+        // If the field is numeric
+        if (isNumeric) {
+            queryData.updateQuery += fieldDatabase + "=" + venueData[fieldCamel];
+        } else {
+            queryData.updateQuery += fieldDatabase + "=\"" + venueData[fieldCamel] + '"';
+        }
     }
     return queryData;
 };
@@ -420,8 +422,6 @@ exports.alter = function (authToken, venueData, venueId, done) {
     };
     // Define a userId variable
     let userId;
-    // Define a list for the values to be changed
-    let values = [];
     // If the auth token doesn't exist
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
@@ -443,9 +443,6 @@ exports.alter = function (authToken, venueData, venueId, done) {
         userId = userRows[0]["userId"];
         // Call the database to check if the venue exists
         db.getPool().query("SELECT admin_id AS adminId FROM Venue WHERE venue_id=?", [venueId], function (err, venueRows) {
-            console.log(venueId);
-            console.log(venueRows);
-            console.log(userId);
             // If the database returns an error
             if (err) {
                 // Return the done function with a 400 - Bad Request code
@@ -455,24 +452,24 @@ exports.alter = function (authToken, venueData, venueId, done) {
                 // Return the done function with a 404 - Not Found code
                 return done(404);
                 // If the user is not the admin of this venue
-            } else if (userId !== venueRows["adminId"]) {
+            } else if (userId !== venueRows[0]["adminId"]) {
                 // Return the done function with a 403 - Forbidden code
                 return done(403);
                 // Otherwise
             } else {
-                // Check which fields are going to be updated and put the in the query
-                queryData = validateField(venueData, queryData, "venueName", "venue_name");
-                queryData = validateField(venueData, queryData, "categoryId", "venue_name");
-                queryData = validateField(venueData, queryData, "city", "venue_name");
-                queryData = validateField(venueData, queryData, "shortDescription", "venue_name");
-                queryData = validateField(venueData, queryData, "longDescription", "venue_name");
-                queryData = validateField(venueData, queryData, "address", "venue_name");
-                queryData = validateField(venueData, queryData, "latitude", "venue_name");
-                queryData = validateField(venueData, queryData, "longitude", "venue_name");
+                // Check which fields are going to be updated and put in the the query
+                queryData = validateField(venueData, queryData, "venueName", "venue_name", false);
+                queryData = validateField(venueData, queryData, "categoryId", "category_id", true);
+                queryData = validateField(venueData, queryData, "city", "city", false);
+                queryData = validateField(venueData, queryData, "shortDescription", "short_description", false);
+                queryData = validateField(venueData, queryData, "longDescription", "long_description", false);
+                queryData = validateField(venueData, queryData, "address", "address", false);
+                queryData = validateField(venueData, queryData, "latitude", "latitude", true);
+                queryData = validateField(venueData, queryData, "longitude", "longitude", true);
                 // finish the query
-                queryData.updateQuery += "WHERE venue_id=?";
+                queryData.updateQuery += " WHERE venue_id=?";
                 // Call the database to update the venue details
-                db.getPool().query(queryData.updateQuery, values, function (err) {
+                db.getPool().query(queryData.updateQuery, [venueId], function (err) {
                     // If the database returns an error
                     if (err) {
                         // Return the done function with a 400 - Bad Request code
