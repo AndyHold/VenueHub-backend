@@ -240,9 +240,6 @@ exports.getVenues = function (queries, done) {
             } else {
                 // Return the done function with a 200 - OK code and the section of the rows requested
                 let results = rows.splice(start, count);
-                if (queries["startIndex"] === 2) {
-                    console.log(results);
-                }
                 return done(200, results);
             }
         }
