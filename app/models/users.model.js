@@ -257,7 +257,7 @@ exports.getUser = function(userId, authToken, done) {
     });
 };
 
-let validateField = function (userData, queryData, fieldCamel, fieldDatabase) {
+let validateField = async function (userData, queryData, fieldCamel, fieldDatabase) {
     // If the venue name is to be changed
     if (userData.hasOwnProperty(fieldCamel)) {
         // If the query already has a valid request field
@@ -270,17 +270,31 @@ let validateField = function (userData, queryData, fieldCamel, fieldDatabase) {
         }
         // If the field is password
         if (fieldCamel === 'password') {
-            // Call crypt to encrypt the password
-            crypt.hash(userData["password"], 10, function (err, hashedPassword) {
-                userData["password"] = hashedPassword;
+            // If the password is a numeric
+            if (typeof userData["password"] !== 'number') {
+                // Call crypt to encrypt the password
+                const hashedPassword = await crypt.hash(userData["password"], 10);
                 // Add the field to the query
-                queryData.updateQuery += fieldDatabase + "=\"" + userData[fieldCamel] + '"';
+                queryData.updateQuery += fieldDatabase + "=\"" + hashedPassword + '"';
+                // Finish the query
+                queryData.updateQuery += " WHERE user_id=?";
                 // Return the query data
                 return queryData;
-            });
+            } else {
+                // Set the query to be empty so that an error occurs when the database is called
+                queryData.updateQuery = "";
+                // Return the query data
+                return queryData;
+            }
+        } else if (userData[fieldCamel].length === 0) {
+            // Set the query to be empty so that an error occurs when the database is called
+            queryData.updateQuery = "";
+            // Return the query data
+            return queryData;
+        } else {
+            // Add the field to the query
+            queryData.updateQuery += fieldDatabase + "=\"" + userData[fieldCamel] + '"';
         }
-        // Add the field to the query
-        queryData.updateQuery += fieldDatabase + "=\"" + userData[fieldCamel] + '"';
     }
     return queryData;
 };
@@ -301,7 +315,7 @@ exports.updateUser = function(userData, authToken, userId, done) {
         return done(400);
     } else {
         // Call the database to get the users information
-        db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, rows) {
+        db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], async function (err, rows) {
             // if the database returns an error or an empty row set
             if (err || rows.length === 0) {
                 // Return the done function with a 404 - Not Found code
@@ -313,15 +327,19 @@ exports.updateUser = function(userData, authToken, userId, done) {
             // If one or more of the required fields are missing, or incorrect
             } else {
                 // Check which fields are going to be updated and put in the the query
-                queryData = validateField(userData, queryData, "givenName", "given_name");
-                queryData = validateField(userData, queryData, "familyName", "family_name");
-                queryData = validateField(userData, queryData, "password", "password");
-                // Finish the query
-                queryData.updateQuery += " WHERE user_id=?";
+                await validateField(userData, queryData, "givenName", "given_name");
+                await validateField(userData, queryData, "familyName", "family_name");
+                await validateField(userData, queryData, "password", "password");
+                // If the password is not present
+                if (!userData.hasOwnProperty("password")) {
+                    // Finish the query
+                    queryData.updateQuery += " WHERE user_id=?";
+                }
                 // Call the database to update the users records
                 db.getPool().query(queryData.updateQuery, [userId], function (err) {
                     // If the database returns an error
                     if (err) {
+                        console.log(err);
                         // Return the done function with a 400 - Bad Request code
                         return done(400);
                     } else {
