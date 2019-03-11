@@ -262,7 +262,12 @@ exports.updateUser = function(userData, authToken, userId, done) {
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
         return done(401);
+        // If the body is empty
+    } else if (userData.length === 0) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
     } else {
+        // TODO make this work for one or more fields.
         // Call the database to get the users information
         db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, rows) {
             // if the database returns an error or an empty row set
@@ -278,7 +283,7 @@ exports.updateUser = function(userData, authToken, userId, done) {
                 !userData.hasOwnProperty("familyName") || userData["familyName"].length === 0 ||
                 !userData.hasOwnProperty("password") || userData["password"].length === 0) {
                 // Return the done function with a 400 - Bad Request code
-                return done(403);
+                return done(400);
             } else {
                 // Call crypt to encrypt the new password
                 crypt.hash(userData["password"], 10, function (err, hash) {
