@@ -72,19 +72,19 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
             // Call uidGen to create a new filename
             generateFilename(function (filename) {
                 let photoType = photoData["mimetype"].split('/')[1];
-                filename += photoType;
+                filename += '.' + photoType;
                 // Set the values variable
                 values = [
                     [venueId],
                     [filename]
                 ];
                 // If the venue has a primary photo
-                if (venueRows[0]["isPrimary"]) {
-                    // If the photo data includes a is_primary boolean
-                    if (photoBody.hasOwnProperty("isPrimary")) {
+                if (venueRows[0]["primaryPhoto"] !== null) {
+                    // If the photo data includes a make_primary boolean
+                    if (photoBody["makePrimary"] !== undefined) {
                         // Push isPrimary onto the values list and set it to the isPrimary list
-                        values.push(photoBody["isPrimary"]);
-                        isPrimary = photoBody["isPrimary"];
+                        values.push([photoBody["makePrimary"]]);
+                        isPrimary = photoBody["makePrimary"] === "true";
                     } else {
                         // Push false to the values list as the default is primary value.
                         values.push([false]);
@@ -101,6 +101,11 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                 }
                 // Finish the insert query
                 insertQuery += queryFields + ")";
+                // If the directory doesn't exist
+                if (!filesystem.existsSync(photoDir)) {
+                    // Create the directory
+                    filesystem.mkdirSync(photoDir);
+                }
                 // If the photo is to be set to primary
                 if (isPrimary) {
                     // Call the database to set all other photos for this venue to not primary
