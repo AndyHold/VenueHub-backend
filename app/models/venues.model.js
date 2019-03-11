@@ -368,7 +368,8 @@ exports.insert = function (authToken, venueData, done) {
                         // Extract the user id from the rows
                         let userId = rows[0]["userId"];
                         // Get the current time
-                        let currentDate = Date();
+                        let currentDate = new Date();
+                        console.log(currentDate);
                         // Push the userId and the current date onto the values array
                         values.push([userId]);
                         values.push([currentDate]);
