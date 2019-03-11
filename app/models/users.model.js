@@ -61,8 +61,8 @@ exports.register = function(userData, done) {
                 crypt.hash(password, 10, function (err, hash) {
                     // If the hash returns an error
                     if (err) {
-                        // Return the done function with code of 400 and a null object
-                        return done(400, null);
+                        // Return the done function with a 500 - Internal Server Error code
+                        return done(500);
                         // Otherwise
                     } else {
                         // Add the hashed password to the values list

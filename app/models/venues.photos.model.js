@@ -1,6 +1,6 @@
 const db = require('../../config/db');
 const filesystem = require("fs");
-const photoDir = __dirname + "/venue-photos/";
+const photoDir = __dirname + "/../venue-photos/";
 const uidGenerator = require('uid-generator');
 const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 
@@ -56,7 +56,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
     // Call the database to get the venue data
     db.getPool().query("SELECT admin_id AS adminId, primaryPhoto FROM Venue LEFT JOIN " +
         "(SELECT photo_filename AS primaryPhoto, venue_id FROM VenuePhoto WHERE is_primary) AS PrimaryPhotos " +
-        "ON Venue.venue_id=PrimaryPhotos.venue_id WHERE venue_id=?", [venueId], function (err, venueRows) {
+        "ON Venue.venue_id=PrimaryPhotos.venue_id WHERE Venue.venue_id=?", [venueId], function (err, venueRows) {
         // If the database returns an error or no venue
         if (err || venueRows.length === 0) {
             // Return the done function with a 404 - Not Found code
@@ -93,7 +93,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                     values.push([true]);
                 }
                 // If the photo data includes a description
-                if (photoBody.hasOwnProperty("description")) {
+                if (photoBody["description"] !== undefined) {
                     // Update the insert query with the description and increase the query fields by 1
                     insertQuery += ", photo_description";
                     queryFields += ", ?";
@@ -119,6 +119,21 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                                 });
                             }
                         });
+                    });
+                } else {
+                    // Call the database to insert the photo
+                    db.getPool().query(insertQuery, values, function (err) {
+                        // If the database returns an error
+                        if (err) {
+                            // Return the done function with a 400 - Bad Request code
+                            return done(400);
+                        } else {
+                            // Call the filesystem to save the photo
+                            filesystem.writeFile(photoDir + filename, photoData["buffer"], function () {
+                                // Return the done function with a 201 - Created code
+                                return done(201);
+                            });
+                        }
                     });
                 }
             });

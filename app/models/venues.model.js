@@ -188,7 +188,6 @@ exports.getVenues = function (queries, done) {
     db.getPool().query(queryTemplate, function (err, rows) {
         // If the database returns an error
         if (err) {
-            console.log(err);
             // Return the done function with a 400 - Bad Request code
             return done(400);
         } else {
@@ -235,12 +234,10 @@ exports.getVenues = function (queries, done) {
                     }
                 });
                 // Return the done function with a 200 - OK code and the section of the rows requested
-                console.log(rows.splice(start, count));
                 return done(200, rows.splice(start, count));
                 // Otherwise
             } else {
                 // Return the done function with a 200 - OK code and the section of the rows requested
-                console.log(rows.splice(start, count));
                 return done(200, rows.splice(start, count));
             }
         }
@@ -460,7 +457,7 @@ exports.alter = function (authToken, venueData, venueId, done) {
                 return done(403);
                 // Otherwise
             } else {
-                // Check which fields are going to be updated and put in the query
+                // Check which fields are going to be updated and put in the the query
                 queryData = validateField(venueData, queryData, "venueName", "venue_name", false);
                 queryData = validateField(venueData, queryData, "categoryId", "category_id", true);
                 queryData = validateField(venueData, queryData, "city", "city", false);
