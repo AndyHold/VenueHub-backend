@@ -235,10 +235,12 @@ exports.getVenues = function (queries, done) {
                     }
                 });
                 // Return the done function with a 200 - OK code and the section of the rows requested
+                console.log(rows.splice(start, count));
                 return done(200, rows.splice(start, count));
                 // Otherwise
             } else {
                 // Return the done function with a 200 - OK code and the section of the rows requested
+                console.log(rows.splice(start, count));
                 return done(200, rows.splice(start, count));
             }
         }
