@@ -3,6 +3,7 @@ const Venue = require('../models/venues.model');
 exports.list = function(req, res) {
     // Get the queries from the request
     let queries = req.query;
+    console.log(queries);
     // Call the model function to query the database and perform the logic
     Venue.getVenues(queries, function(code, results) {
         // If the code is 200
