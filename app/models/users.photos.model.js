@@ -33,7 +33,7 @@ exports.getPhoto = function(userId, done) {
                     return done(404);
                 } else {
                     // Return the done function with a 200 - OK code and the contents of the picture
-                    return done(200, data);
+                    return done(200, data, rows[0]["filename"].split('.')[1]);
                 }
             });
         }

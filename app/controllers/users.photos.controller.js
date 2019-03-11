@@ -4,14 +4,15 @@ exports.getPhoto = function(req, res) {
     // Get the user id from the params
     let userId = parseInt(req.params.id);
     // Call the model class to do the logic and call the database
-    Photos.getPhoto(userId, function(code, result) {
+    Photos.getPhoto(userId, function(code, result, imgtype) {
         // If the code is 404
         if (code === 404) {
             // Send the code via the response
             res.sendStatus(code);
             // Otherwise
         } else {
-            // Send the code and the resulting object
+            // Send the code and the resulting object with the type header
+            res.setHeader("Content-Type", "image/" + imgtype);
             res.status(code).send(result); // TODO not sure if this is correct...?
         }
     });
