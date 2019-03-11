@@ -1,5 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const multer  = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const allowCrossOriginRequests = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -18,6 +21,11 @@ module.exports = function () {
     app.use(bodyParser.raw({type: 'text/plain'}));  // for the /executeSql endpoint
     app.use(bodyParser.raw({type: 'image/jpeg', limit: '5mb'}));
     app.use(bodyParser.raw({type: 'image/png', limit: '5mb'}));
+    app.use(bodyParser.urlencoded({
+        extended: true
+    }));
+    app.use(upload.single("photo"));
+
 
     // ROUTES
     require('../app/routes/backdoor.routes')(app);

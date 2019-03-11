@@ -4,11 +4,13 @@ exports.create = function(req, res) {
     // Get the venue id from the params
     let venueId = req.params.id;
     // Get the photo data from the body
-    let photoData = req.body; // TODO ask at the lab why this isn't working
+    let photoData = req.file;
+    // Get the body from the request
+    let photoBody = req.body;
     // Get the auth token from the headers
     let authToken = req.headers["x-authorization"];
     // Call the model class to perform the logic and call the database
-    Photo.insert(venueId, photoData, authToken, function(code) {
+    Photo.insert(venueId, photoData, photoBody, authToken, function(code) {
         // Send the status code via the response
         res.sendStatus(code);
     });
@@ -20,13 +22,14 @@ exports.read = function(req, res) {
     // Get the filename form the request params
     let filename = req.params.photoFileName;
     // Call the model class to perform the logic and call the database
-    Photo.getPhoto(venueId, filename, function(code, result) {
+    Photo.getPhoto(venueId, filename, function(code, result, imageType) {
         // If the code is 404 - Not Found
         if (code === 404) {
             // Send the code in the response
             res.sendStatus(code);
         } else {
             // Send the code and the photo data in the response
+            res.setHeader("Content-Type", "image/" + imageType);
             res.status(code).send(result);
         }
     });

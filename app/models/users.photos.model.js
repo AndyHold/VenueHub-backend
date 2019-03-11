@@ -7,7 +7,8 @@ const photoDir = __dirname + "/../user-photos/";
 let generateFilename = function (done) {
     uidGen.generate( function (err, filename) {
         // If the filename is already in use or there is an error
-        if (err || filesystem.existsSync(photoDir + filename + ".jpeg") || filesystem.existsSync(photoDir + filename + ".png")) {
+        if (err || filesystem.existsSync(photoDir + filename + ".jpeg") ||
+            filesystem.existsSync(photoDir + filename + ".png")) {
             // Recursively request another filename
             return generateFilename(done);
         } else {
@@ -85,6 +86,11 @@ exports.setPhoto = function(userId, authToken, contentType, picData, done) {
                     if (!err) {
                         // Call the filesystem to delete the old file
                         filesystem.unlink(photoDir + userRows[0]["filename"], function (err) {
+                            // If the filesystem returns an error
+                            if (err) {
+                                // Return the done function with a 500 - Internal Server Error code
+                                return (500);
+                            }
                             // Call the database to replace the filename
                             db.getPool().query("UPDATE User SET profile_photo_filename=? WHERE user_id=?", [[filename], [userId]], function () {
                                 // Return the done function with a 200 - OK code

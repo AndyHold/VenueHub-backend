@@ -32,13 +32,13 @@ exports.getPhoto = function(venueId, filename, done) {
                 return done(404);
             } else {
                 // Return the done function with a 200 - OK code and the photo data
-                return done(200, photoData);
+                return done(200, photoData, filename.split(".")[1]);
             }
         });
     });
 };
 
-exports.insert = function(venueId, photoData, authToken, done) {
+exports.insert = function(venueId, photoData, photoBody, authToken, done) {
     let insertQuery = "INSERT INTO VenuePhoto (venue_id, photo_filename, is_primary";
     let queryFields = ") VALUES (?, ?, ?";
     let isPrimary = false;
@@ -49,7 +49,7 @@ exports.insert = function(venueId, photoData, authToken, done) {
         return done(401);
     }
     // If the photo was not included
-    if (!photoData.hasOwnProperty("photo")) {
+    if (!photoData) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     }
@@ -71,8 +71,7 @@ exports.insert = function(venueId, photoData, authToken, done) {
             }
             // Call uidGen to create a new filename
             generateFilename(function (filename) {
-                // TODO how is the photo sent where is the file type or name???
-                let photoType = ".jpeg"; // TODO get the photo type
+                let photoType = photoData["mimetype"].split('/')[1];
                 filename += photoType;
                 // Set the values variable
                 values = [
@@ -82,10 +81,10 @@ exports.insert = function(venueId, photoData, authToken, done) {
                 // If the venue has a primary photo
                 if (venueRows[0]["isPrimary"]) {
                     // If the photo data includes a is_primary boolean
-                    if (photoData.hasOwnProperty("isPrimary")) {
+                    if (photoBody.hasOwnProperty("isPrimary")) {
                         // Push isPrimary onto the values list and set it to the isPrimary list
-                        values.push(photoData["isPrimary"]);
-                        isPrimary = photoData["isPrimary"];
+                        values.push(photoBody["isPrimary"]);
+                        isPrimary = photoBody["isPrimary"];
                     } else {
                         // Push false to the values list as the default is primary value.
                         values.push([false]);
@@ -94,11 +93,11 @@ exports.insert = function(venueId, photoData, authToken, done) {
                     values.push([true]);
                 }
                 // If the photo data includes a description
-                if (photoData.hasOwnProperty("description")) {
+                if (photoBody.hasOwnProperty("description")) {
                     // Update the insert query with the description and increase the query fields by 1
                     insertQuery += ", photo_description";
                     queryFields += ", ?";
-                    values.push([photoData["description"]]);
+                    values.push([photoBody["description"]]);
                 }
                 // Finish the insert query
                 insertQuery += queryFields + ")";
@@ -114,7 +113,7 @@ exports.insert = function(venueId, photoData, authToken, done) {
                                 return done(400);
                             } else {
                                 // Call the filesystem to save the photo
-                                filesystem.writeFile(photoDir + filename, photoData["photo"], function () {
+                                filesystem.writeFile(photoDir + filename, photoData["buffer"], function () {
                                     // Return the done function with a 201 - Created code
                                     return done(201);
                                 });
