@@ -235,6 +235,7 @@ exports.getVenues = function (queries, done) {
                 });
                 // Return the done function with a 200 - OK code and the section of the rows requested
                 let results = rows.splice(start, count);
+                console.log("here");
                 console.log(results);
                 return done(200, results);
                 // Otherwise
