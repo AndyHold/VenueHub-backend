@@ -8,7 +8,7 @@ exports.list = function(req, res) {
         // If the code is 200
         if (code === 200) {
             //Test Code
-            if (queries["startIndex"] === 2) {
+            if (parseInt(queries["startIndex"]) === 2) {
                 console.log(results);
             }
             // End of Test Code
