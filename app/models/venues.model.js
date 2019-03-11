@@ -457,7 +457,7 @@ exports.alter = function (authToken, venueData, venueId, done) {
                 return done(403);
                 // Otherwise
             } else {
-                // Check which fields are going to be updated and put in the the query
+                // Check which fields are going to be updated and put in the query
                 queryData = validateField(venueData, queryData, "venueName", "venue_name", false);
                 queryData = validateField(venueData, queryData, "categoryId", "category_id", true);
                 queryData = validateField(venueData, queryData, "city", "city", false);

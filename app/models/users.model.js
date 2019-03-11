@@ -257,7 +257,40 @@ exports.getUser = function(userId, authToken, done) {
     });
 };
 
+let validateField = function (userData, queryData, fieldCamel, fieldDatabase) {
+    // If the venue name is to be changed
+    if (userData.hasOwnProperty(fieldCamel)) {
+        // If the query already has a valid request field
+        if (queryData.isValidRequestField) {
+            // Add a coma separator to the query
+            queryData.updateQuery += ", ";
+        } else {
+            // Set valid request to true
+            queryData.isValidRequestField = true;
+        }
+        // If the field is password
+        if (fieldCamel === 'password') {
+            // Call crypt to encrypt the password
+            crypt.hash(userData["password"], 10, function (err, hashedPassword) {
+                userData["password"] = hashedPassword;
+                // Add the field to the query
+                queryData.updateQuery += fieldDatabase + "=\"" + userData[fieldCamel] + '"';
+                // Return the query data
+                return queryData;
+            });
+        }
+        // Add the field to the query
+        queryData.updateQuery += fieldDatabase + "=\"" + userData[fieldCamel] + '"';
+    }
+    return queryData;
+};
+
 exports.updateUser = function(userData, authToken, userId, done) {
+    // Initialize a boolean variable isValidRequestField to false and an update query in an object
+    let queryData = {
+        "isValidRequestField": false,
+        "updateQuery": "UPDATE User SET "
+    };
     // If the auth header type is undefined
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
@@ -267,7 +300,6 @@ exports.updateUser = function(userData, authToken, userId, done) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     } else {
-        // TODO make this work for one or more fields.
         // Call the database to get the users information
         db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, rows) {
             // if the database returns an error or an empty row set
@@ -279,30 +311,22 @@ exports.updateUser = function(userData, authToken, userId, done) {
                 // Return the done function with a 403 - Forbidden code
                 return done(403);
             // If one or more of the required fields are missing, or incorrect
-            } else if (!userData.hasOwnProperty("givenName") || userData["givenName"].length === 0 ||
-                !userData.hasOwnProperty("familyName") || userData["familyName"].length === 0 ||
-                !userData.hasOwnProperty("password") || userData["password"].length === 0) {
-                // Return the done function with a 400 - Bad Request code
-                return done(400);
             } else {
-                // Call crypt to encrypt the new password
-                crypt.hash(userData["password"], 10, function (err, hash) {
-                    // If crypt returns an error
+                // Check which fields are going to be updated and put in the the query
+                queryData = validateField(userData, queryData, "givenName", "given_name");
+                queryData = validateField(userData, queryData, "familyName", "family_name");
+                queryData = validateField(userData, queryData, "password", "password");
+                // Finish the query
+                queryData.updateQuery += " WHERE user_id=?";
+                // Call the database to update the users records
+                db.getPool().query(queryData.updateQuery, [userId], function (err) {
+                    // If the database returns an error
                     if (err) {
                         // Return the done function with a 400 - Bad Request code
                         return done(400);
                     } else {
-                        // Call the database to update the users records
-                        db.getPool().query("UPDATE User SET given_name=?, family_name=?, password=? WHERE user_id=?", [[userData["givenName"]], [userData["familyName"]], [hash], [userId]], function (err) {
-                            // If the database returns an error
-                            if (err) {
-                                // Return the done function with a 400 - Bad Request code
-                                return done(400);
-                            } else {
-                                // Return the done function with a 200 - OK code
-                                return done(200);
-                            }
-                        });
+                        // Return the done function with a 200 - OK code
+                        return done(200);
                     }
                 });
             }
