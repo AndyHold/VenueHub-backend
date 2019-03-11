@@ -15,7 +15,9 @@ module.exports = function () {
     // MIDDLEWARE
     app.use(allowCrossOriginRequests);
     app.use(bodyParser.json());
-    app.use(bodyParser.raw({ type: 'text/plain' }));  // for the /executeSql endpoint
+    app.use(bodyParser.raw({type: 'text/plain'}));  // for the /executeSql endpoint
+    app.use(bodyParser.raw({type: 'image/jpg', limit: '5mb'}));  // for the /executeSql endpoint
+    app.use(bodyParser.raw({type: 'image/png', limit: '5mb'}));  // for the /executeSql endpoint
 
     // ROUTES
     require('../app/routes/backdoor.routes')(app);
@@ -27,7 +29,7 @@ module.exports = function () {
 
     // DEBUG (you can remove this)
     app.get('/', function (req, res) {
-        res.send({ 'message': 'Hello World!' })
+        res.send({'message': 'Hello World!'})
     });
 
     return app;

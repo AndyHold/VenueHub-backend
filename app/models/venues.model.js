@@ -18,7 +18,7 @@ const haversine = function (longitude1, latitude1, longitude2, latitude2) {
     return 6367 * c;
 };
 
-exports.getVenues = function(queries, done) {
+exports.getVenues = function (queries, done) {
     // TODO refactor this code so it is more readable with smaller functions
     // Set the booleans sortByDistance and reverseOrder to false and queryBody to an empty string
     let sortByDistance = false;
@@ -77,7 +77,7 @@ exports.getVenues = function(queries, done) {
         queryBody += "  meanStarRating>=" + queries["minStarRating"];
     }
     // If maxCostRating is a query option
-    if (queries.hasOwnProperty( "maxCostRating")) {
+    if (queries.hasOwnProperty("maxCostRating")) {
         // If the max cost rating is not in an appropriate range
         if (queries["maxCostRating"] > 4 || queries["maxCostRating"] < 0) {
             // Return the done function with a 400 - Bad Request code
@@ -157,32 +157,32 @@ exports.getVenues = function(queries, done) {
     // Set the queryTemplate and concatenate the search options
     let queryTemplate = "SELECT venueId, venueName, categoryId, city, shortDescription, latitude, longitude, meanStarRating, modeCostRating, primaryPhoto\n" +
         "FROM (\n" +
-            "SELECT\n" +
-            "Venue.venue_id AS venueId, admin_id, Venue.venue_name AS venueName, " +
-            "Venue.category_id AS categoryId, Venue.city, Venue.short_description AS shortDescription, Venue.latitude, " +
-            "Venue.longitude, COALESCE(STAR_RATING, 0 ) AS meanStarRating, COALESCE(COST_RATING, 0) AS modeCostRating, " +
-            "primaryPhoto\n" +
-            "FROM\n" +
-            "Venue LEFT JOIN (\n" +
-                "SELECT\n" +
-                "reviewed_venue_id, AVG(star_rating) AS STAR_RATING, ModeValues.COST_RATING\n" +
-                "FROM\n" +
-                "Review LEFT JOIN (\n" +
-                    "SELECT\n" +
-                    "Mode1.venue_id, Mode2.mode_cost_rating AS COST_RATING\n" +
-                    "FROM\n" +
-                    "ModeCostRating AS Mode1 JOIN\n" +
-                    "ModeCostRating AS Mode2 ON Mode1.venue_id=Mode2.venue_id\n" +
-                    "WHERE Mode2.mode_cost_rating >= Mode1.mode_cost_rating\n" +
-                    "GROUP BY Mode1.venue_id) AS ModeValues ON Review.reviewed_venue_id=ModeValues.venue_id\n" +
-                "GROUP BY\n" +
-                "reviewed_venue_id) AS Ratings ON Venue.venue_id=Ratings.reviewed_venue_id LEFT JOIN (\n" +
-                    "SELECT\n" +
-                    "venue_id, COALESCE(photo_filename, '') AS primaryPhoto\n" +
-                    "FROM\n" +
-                    "VenuePhoto\n" +
-                    "WHERE\n" +
-                    "is_primary) AS Photos ON Photos.venue_id=Venue.venue_id) AS Results\n" +
+        "SELECT\n" +
+        "Venue.venue_id AS venueId, admin_id, Venue.venue_name AS venueName, " +
+        "Venue.category_id AS categoryId, Venue.city, Venue.short_description AS shortDescription, Venue.latitude, " +
+        "Venue.longitude, COALESCE(STAR_RATING, 0 ) AS meanStarRating, COALESCE(COST_RATING, 0) AS modeCostRating, " +
+        "primaryPhoto\n" +
+        "FROM\n" +
+        "Venue LEFT JOIN (\n" +
+        "SELECT\n" +
+        "reviewed_venue_id, AVG(star_rating) AS STAR_RATING, ModeValues.COST_RATING\n" +
+        "FROM\n" +
+        "Review LEFT JOIN (\n" +
+        "SELECT\n" +
+        "Mode1.venue_id, Mode2.mode_cost_rating AS COST_RATING\n" +
+        "FROM\n" +
+        "ModeCostRating AS Mode1 JOIN\n" +
+        "ModeCostRating AS Mode2 ON Mode1.venue_id=Mode2.venue_id\n" +
+        "WHERE Mode2.mode_cost_rating >= Mode1.mode_cost_rating\n" +
+        "GROUP BY Mode1.venue_id) AS ModeValues ON Review.reviewed_venue_id=ModeValues.venue_id\n" +
+        "GROUP BY\n" +
+        "reviewed_venue_id) AS Ratings ON Venue.venue_id=Ratings.reviewed_venue_id LEFT JOIN (\n" +
+        "SELECT\n" +
+        "venue_id, COALESCE(photo_filename, '') AS primaryPhoto\n" +
+        "FROM\n" +
+        "VenuePhoto\n" +
+        "WHERE\n" +
+        "is_primary) AS Photos ON Photos.venue_id=Venue.venue_id) AS Results\n" +
         queryBody + "\n" + sortBy;
     // Call the database to return the results of the search
     db.getPool().query(queryTemplate, function (err, rows) {
@@ -244,29 +244,29 @@ exports.getVenues = function(queries, done) {
     });
 };
 
-exports.getCats = function(done) {
+exports.getCats = function (done) {
     db.getPool().query('SELECT category_id AS categoryId, category_name AS categoryName, category_description AS categoryDescription FROM VenueCategory', function (err, rows) {
         // If the database returns an error
         if (err) {
             // Set rows to an empty array
             rows = [];
-        //Otherwise
+            //Otherwise
         }
         // Return the done function with the rows that the database returned
         return done(rows);
     });
 };
 
-exports.getOne = function(venueId, done) {
+exports.getOne = function (venueId, done) {
     // Call the database to get the venue data
     db.getPool().query('SELECT venue_name AS venueName, admin_id AS admin, category_id AS category, city, ' +
         'short_description AS shortDescription, long_description as longDescription, date_added AS dateAdded, ' +
-        'address, latitude, longitude FROM Venue WHERE venue_id=?', [venueId], function(err, venueRows) {
+        'address, latitude, longitude FROM Venue WHERE venue_id=?', [venueId], function (err, venueRows) {
         // If the database returns an error or the rows are empty
         if (err || venueRows.length === 0) {
             // Return the done function with a 404 - Not Found code
             return done(404);
-        // Otherwise
+            // Otherwise
         } else {
             // Call the database to get the admin information
             db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [venueRows[0]["admin"]], function (err, adminRows) {
@@ -275,10 +275,10 @@ exports.getOne = function(venueId, done) {
                     console.log(adminRows);
                     // Return the done function with a 404 - Not Found code
                     return done(404);
-                // Otherwise
+                    // Otherwise
                 } else {
                     // Set the admin field in the venue rows to be the results.
-                    venueRows[0]["admin"] = adminRows[0]; // TODO is the admin id number supposed to be a string?
+                    venueRows[0]["admin"] = adminRows[0];
                     // Call the database to get the category information
                     db.getPool().query("SELECT category_id as categoryId, category_name AS categoryName, " +
                         "category_description AS categoryDescription FROM VenueCategory WHERE category_id=?", [venueRows[0]["category"]], function (err, categoryRows) {
@@ -287,7 +287,7 @@ exports.getOne = function(venueId, done) {
                             console.log(err);
                             // Return the done function with a 404 - Not Found code
                             return done(404);
-                        // Otherwise
+                            // Otherwise
                         } else {
                             // Set the category field in the venue rows to be the results
                             venueRows[0]["category"] = categoryRows[0];
@@ -300,7 +300,7 @@ exports.getOne = function(venueId, done) {
                                     console.log(err);
                                     // Return the done function with a 404 - Not Found code
                                     return done(404);
-                                // Otherwise
+                                    // Otherwise
                                 } else {
                                     // Set the photos field in the venue rows to be the results
                                     venueRows[0]["photos"] = photoRows;
@@ -316,9 +316,9 @@ exports.getOne = function(venueId, done) {
     });
 };
 
-exports.insert = function(authToken, venueData, done) {
+exports.insert = function (authToken, venueData, done) {
     // Put the new venue data into an array ready for the database to insert.
-    let values =  [
+    let values = [
         [venueData["venueName"]],
         [venueData["categoryId"]],
         [venueData["city"]],
@@ -337,10 +337,10 @@ exports.insert = function(authToken, venueData, done) {
         !(venueData.hasOwnProperty("longDescription") && typeof venueData["longDescription"] === typeof "" && venueData["longDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("address") && typeof venueData["address"] === typeof "" && venueData["address"].length !== 0) ||
         !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === "number") || Math.abs(parseFloat(venueData["latitude"])) > 90 ||
-        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number")  || Math.abs(parseFloat(venueData["longitude"])) > 180) {
+        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number") || Math.abs(parseFloat(venueData["longitude"])) > 180) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
-    // Otherwise
+        // Otherwise
     } else {
         // Call the database to get the category Id
         db.getPool().query("SELECT * FROM VenueCategory WHERE category_id=?", [venueData["categoryId"]], function (err, categoryRows) {
@@ -408,7 +408,7 @@ let validateField = function (venueData, queryData, fieldCamel, fieldDatabase) {
     return queryData;
 };
 
-exports.alter = function(authToken, venueData, venueId, done) {
+exports.alter = function (authToken, venueData, venueId, done) {
     // Initialize a boolean variable isValidRequestField to false and an update query in an object
     let queryData = {
         "isValidRequestField": false,
@@ -421,7 +421,7 @@ exports.alter = function(authToken, venueData, venueId, done) {
     // If the auth token doesn't exist
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
-        return done (401);
+        return done(401);
     }
     // Call the database to retrieve the user logged in with the given token
     db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
