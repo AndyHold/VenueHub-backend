@@ -146,12 +146,14 @@ exports.getVenues = function (queries, done) {
             // If the sortByDistance boolean is set to false
             if (!sortByDistance) {
                 // Add DESC to the sortBy string
-                sortBy += " DESC";
+                sortBy += " ASC";
                 // Otherwise
             } else {
                 // Set the reverseOrder boolean to true
                 reverseOrder = true;
             }
+        } else if (!sortByDistance) {
+            sortBy += " DESC";
         }
     }
     // Set the queryTemplate and concatenate the search options
