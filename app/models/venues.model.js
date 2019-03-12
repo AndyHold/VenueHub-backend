@@ -180,7 +180,7 @@ exports.getVenues = function (queries, done) {
         "GROUP BY\n" +
         "reviewed_venue_id) AS Ratings ON Venue.venue_id=Ratings.reviewed_venue_id LEFT JOIN (\n" +
         "SELECT\n" +
-        "venue_id, COALESCE(photo_filename, '') AS primaryPhoto\n" +
+        "venue_id, photo_filename AS primaryPhoto\n" +
         "FROM\n" +
         "VenuePhoto\n" +
         "WHERE\n" +
