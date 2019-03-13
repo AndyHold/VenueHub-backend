@@ -152,9 +152,9 @@ exports.getVenues = function (queries, done) {
                 // Set the reverseOrder boolean to true
                 reverseOrder = true;
             }
-        } else if (!sortByDistance) {
-            sortBy += " DESC";
         }
+    } else if (!sortByDistance) {
+        sortBy += " DESC";
     }
     // Set the queryTemplate and concatenate the search options
     let queryTemplate = "SELECT venueId, venueName, categoryId, city, shortDescription, latitude, longitude, meanStarRating, modeCostRating, primaryPhoto\n" +
