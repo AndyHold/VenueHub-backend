@@ -7,6 +7,11 @@ exports.list = function(req, res) {
     Venue.getVenues(queries, function(code, results) {
         // If the code is 200
         if (code === 200) {
+            // Test Code
+            if (parseInt(queries["startIndex"]) === 2) {
+                console.log(results);
+            }
+            // End of Test Code
             // Send the code with the results
             res.status(code).json(results);
             // Otherwise
