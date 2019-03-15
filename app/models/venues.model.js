@@ -146,13 +146,15 @@ exports.getVenues = function (queries, done) {
             // If the sortByDistance boolean is set to false
             if (!sortByDistance) {
                 // Add DESC to the sortBy string
-                sortBy += " DESC";
+                sortBy += " ASC";
                 // Otherwise
             } else {
                 // Set the reverseOrder boolean to true
                 reverseOrder = true;
             }
         }
+    } else if (!sortByDistance) {
+        sortBy += " DESC";
     }
     // Set the queryTemplate and concatenate the search options
     let queryTemplate = "SELECT venueId, venueName, categoryId, city, shortDescription, latitude, longitude, meanStarRating, modeCostRating, primaryPhoto\n" +
@@ -160,7 +162,7 @@ exports.getVenues = function (queries, done) {
         "SELECT\n" +
         "Venue.venue_id AS venueId, admin_id, Venue.venue_name AS venueName, " +
         "Venue.category_id AS categoryId, Venue.city, Venue.short_description AS shortDescription, Venue.latitude, " +
-        "Venue.longitude, COALESCE(STAR_RATING, 0 ) AS meanStarRating, COALESCE(COST_RATING, 0) AS modeCostRating, " +
+        "Venue.longitude, STAR_RATING AS meanStarRating, COST_RATING AS modeCostRating, " +
         "primaryPhoto\n" +
         "FROM\n" +
         "Venue LEFT JOIN (\n" +
@@ -178,7 +180,7 @@ exports.getVenues = function (queries, done) {
         "GROUP BY\n" +
         "reviewed_venue_id) AS Ratings ON Venue.venue_id=Ratings.reviewed_venue_id LEFT JOIN (\n" +
         "SELECT\n" +
-        "venue_id, COALESCE(photo_filename, '') AS primaryPhoto\n" +
+        "venue_id, photo_filename AS primaryPhoto\n" +
         "FROM\n" +
         "VenuePhoto\n" +
         "WHERE\n" +
