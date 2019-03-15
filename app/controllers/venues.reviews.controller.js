@@ -20,8 +20,10 @@ exports.listFromVenue = function(req, res) {
 exports.listFromUser = function(req, res) {
     // Get the user id from the parameters
     let userId = parseInt(req.params.id);
+    // Get the auth token from the headers
+    let authToken = req.headers["x-authorization"];
     // Call the model class to perform the logic and call the database.
-    Review.getReviewsFromUser(userId, function(code, result) {
+    Review.getReviewsFromUser(userId, authToken, function(code, result) {
         // If the return code is 404 - Not Found
         if (code === 404) {
             // Respond with the code

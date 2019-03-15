@@ -31,6 +31,14 @@ exports.getReviewsFromVenue = function(venueId, done) {
     });
 };
 
+let isInt = function(number) {
+    try {
+        return Math.abs(Math.floor(number) - number) < 1E-5;
+    } catch(err) {
+        return false;
+    }
+};
+
 exports.getReviewsFromUser = function(userId, authToken, done) {
     // If the auth token was not sent
     if (authToken === undefined) {
@@ -101,8 +109,8 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
     let userId;
     // If the data sent in the request is incorrect
     if (!reviewData.hasOwnProperty("reviewBody") || reviewData["reviewBody"].length === 0 || reviewData["reviewBody"].length > 1024 ||
-        !reviewData.hasOwnProperty("starRating") || typeof reviewData["starRating"] !== "number" ||
-        !reviewData.hasOwnProperty("costRating") || typeof reviewData["costRating"] !== "number") {
+        !reviewData.hasOwnProperty("starRating") || !isInt(reviewData["starRating"]) || reviewData["starRating"] < 1 || reviewData["starRating"] > 5 ||
+        !reviewData.hasOwnProperty("costRating") || !isInt(reviewData["costRating"]) || reviewData["costRating"] < 0 || reviewData["costRating"] > 4) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     }
@@ -157,7 +165,7 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
                             // Otherwise
                         } else {
                             // Return the done function with a 201 - Created code
-                            return done(200);
+                            return done(201);
                         }
                     });
                 }
