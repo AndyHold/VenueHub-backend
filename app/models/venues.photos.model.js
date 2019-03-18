@@ -48,68 +48,104 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
         // return the done function with a 401 - Unauthorized code
         return done(401);
     }
-    // If the photo was not included
-    if (!photoData) {
-        // Return the done function with a 400 - Bad Request code
-        return done(400);
-    }
-    // Call the database to get the venue data
-    db.getPool().query("SELECT admin_id AS adminId, primaryPhoto FROM Venue LEFT JOIN " +
-        "(SELECT photo_filename AS primaryPhoto, venue_id FROM VenuePhoto WHERE is_primary) AS PrimaryPhotos " +
-        "ON Venue.venue_id=PrimaryPhotos.venue_id WHERE Venue.venue_id=?", [venueId], function (err, venueRows) {
-        // If the database returns an error or no venue
-        if (err || venueRows.length === 0) {
-            // Return the done function with a 404 - Not Found code
-            return done(404);
+    // Call the database to get the user logged in
+    db.getPool().query("SELECT user_id FROM User WHERE auth_token=?", [authToken], function(err, userRows) {
+        // If the database returns an error
+        if (err) {
+            // Return the done function with a 500 - Internal Server Error code
+            return done(500);
         }
-        // Call the database to get the admin's details
-        db.getPool().query("SELECT auth_token AS authToken FROM User WHERE user_id=?", [venueRows[0]["adminId"]], function (err, adminRows) {
-            // If the admin token doesn't match the user token
-            if (adminRows[0]["authToken"] !== authToken) {
-                // Return the done function with a 403 - Forbidden code
-                return done(403);
+        // If the userRows are empty
+        if (userRows.length === 0) {
+            // Return the done function with a 401 - Unauthorized code
+            return done(401);
+        }
+        // If the photo or the description was not included or the description is empty
+        if (!photoData || !photoBody.hasOwnProperty("description") || photoBody["description"].length === 0) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+        }
+        // If there is a makePrimary Field included
+        if (photoBody.hasOwnProperty("makePrimary")) {
+            // If the make primary field is not true or false
+            if (photoBody["makePrimary"] !== "true" || photoBody["makePrimary"] !== "false") {
+                // Return the done function with a 400 - Bad Request code
+                return done(400);
             }
-            // Call uidGen to create a new filename
-            generateFilename(function (filename) {
-                let photoType = photoData["mimetype"].split('/')[1];
-                filename += '.' + photoType;
-                // Set the values variable
-                values = [
-                    [venueId],
-                    [filename]
-                ];
-                // If the venue has a primary photo
-                if (venueRows[0]["primaryPhoto"] !== null) {
-                    // If the photo data includes a make_primary boolean
-                    if (photoBody["makePrimary"] !== undefined) {
-                        // Push isPrimary onto the values list and set it to the isPrimary list
-                        values.push([photoBody["makePrimary"]]);
-                        isPrimary = photoBody["makePrimary"] === "true";
+        }
+        // Call the database to get the venue data
+        db.getPool().query("SELECT admin_id AS adminId, primaryPhoto FROM Venue LEFT JOIN " +
+            "(SELECT photo_filename AS primaryPhoto, venue_id FROM VenuePhoto WHERE is_primary) AS PrimaryPhotos " +
+            "ON Venue.venue_id=PrimaryPhotos.venue_id WHERE Venue.venue_id=?", [venueId], function (err, venueRows) {
+            // If the database returns an error or no venue
+            if (err || venueRows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+            }
+            // Call the database to get the admin's details
+            db.getPool().query("SELECT auth_token AS authToken FROM User WHERE user_id=?", [venueRows[0]["adminId"]], function (err, adminRows) {
+                // If the admin token doesn't match the user token
+                if (adminRows[0]["authToken"] !== authToken) {
+                    // Return the done function with a 403 - Forbidden code
+                    return done(403);
+                }
+                // Call uidGen to create a new filename
+                generateFilename(function (filename) {
+                    let photoType = photoData["mimetype"].split('/')[1];
+                    filename += '.' + photoType;
+                    // Set the values variable
+                    values = [
+                        [venueId],
+                        [filename]
+                    ];
+                    // If the venue has a primary photo
+                    if (venueRows[0]["primaryPhoto"] !== null) {
+                        // If the photo data includes a make_primary boolean
+                        if (photoBody["makePrimary"] !== undefined) {
+                            // Push isPrimary onto the values list and set it to the isPrimary list
+                            values.push([photoBody["makePrimary"]]);
+                            isPrimary = photoBody["makePrimary"] === "true";
+                        } else {
+                            // Push false to the values list as the default is primary value.
+                            values.push([false]);
+                        }
                     } else {
-                        // Push false to the values list as the default is primary value.
-                        values.push([false]);
+                        values.push([true]);
                     }
-                } else {
-                    values.push([true]);
-                }
-                // If the photo data includes a description
-                if (photoBody["description"] !== undefined) {
-                    // Update the insert query with the description and increase the query fields by 1
-                    insertQuery += ", photo_description";
-                    queryFields += ", ?";
-                    values.push([photoBody["description"]]);
-                }
-                // Finish the insert query
-                insertQuery += queryFields + ")";
-                // If the directory doesn't exist
-                if (!filesystem.existsSync(photoDir)) {
-                    // Create the directory
-                    filesystem.mkdirSync(photoDir);
-                }
-                // If the photo is to be set to primary
-                if (isPrimary) {
-                    // Call the database to set all other photos for this venue to not primary
-                    db.getPool().query("UPDATE VenuePhoto SET is_primary=false WHERE venue_id=?", [venueId], function () {
+                    // If the photo data includes a description
+                    if (photoBody["description"] !== undefined) {
+                        // Update the insert query with the description and increase the query fields by 1
+                        insertQuery += ", photo_description";
+                        queryFields += ", ?";
+                        values.push([photoBody["description"]]);
+                    }
+                    // Finish the insert query
+                    insertQuery += queryFields + ")";
+                    // If the directory doesn't exist
+                    if (!filesystem.existsSync(photoDir)) {
+                        // Create the directory
+                        filesystem.mkdirSync(photoDir);
+                    }
+                    // If the photo is to be set to primary
+                    if (isPrimary) {
+                        // Call the database to set all other photos for this venue to not primary
+                        db.getPool().query("UPDATE VenuePhoto SET is_primary=false WHERE venue_id=?", [venueId], function () {
+                            // Call the database to insert the photo
+                            db.getPool().query(insertQuery, values, function (err) {
+                                // If the database returns an error
+                                if (err) {
+                                    // Return the done function with a 400 - Bad Request code
+                                    return done(400);
+                                } else {
+                                    // Call the filesystem to save the photo
+                                    filesystem.writeFile(photoDir + filename, photoData["buffer"], function () {
+                                        // Return the done function with a 201 - Created code
+                                        return done(201);
+                                    });
+                                }
+                            });
+                        });
+                    } else {
                         // Call the database to insert the photo
                         db.getPool().query(insertQuery, values, function (err) {
                             // If the database returns an error
@@ -124,23 +160,8 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                                 });
                             }
                         });
-                    });
-                } else {
-                    // Call the database to insert the photo
-                    db.getPool().query(insertQuery, values, function (err) {
-                        // If the database returns an error
-                        if (err) {
-                            // Return the done function with a 400 - Bad Request code
-                            return done(400);
-                        } else {
-                            // Call the filesystem to save the photo
-                            filesystem.writeFile(photoDir + filename, photoData["buffer"], function () {
-                                // Return the done function with a 201 - Created code
-                                return done(201);
-                            });
-                        }
-                    });
-                }
+                    }
+                });
             });
         });
     });
