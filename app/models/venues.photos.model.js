@@ -61,12 +61,12 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
             return done(401);
         }
         // If the photo or the description was not included or the description is empty
-        if (!photoData || !photoBody.hasOwnProperty("description") || photoBody["description"].length === 0) {
+        if (!photoData || photoBody["description"] === undefined || photoBody["description"].length === 0) {
             // Return the done function with a 400 - Bad Request code
             return done(400);
         }
         // If there is a makePrimary Field included
-        if (photoBody.hasOwnProperty("makePrimary")) {
+        if (photoBody["makePrimary"] !== undefined) {
             // If the make primary field is not true or false
             if (photoBody["makePrimary"] !== "true" || photoBody["makePrimary"] !== "false") {
                 // Return the done function with a 400 - Bad Request code
