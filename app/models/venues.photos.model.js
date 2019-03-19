@@ -119,7 +119,12 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                 }
                 // Finish the insert query
                 insertQuery += queryFields + ")";
-                // If the directory doesn't exist
+                // If the venue-photo directory doesn't exist
+                if (!filesystem.existsSync(photoDir)) {
+                  // Create the directory
+                  filesystem.mkdirSync(photoDir);
+                }
+                // If the venueId directory doesn't exist
                 if (!filesystem.existsSync(photoDir + venueId)) {
                     // Create the directory
                     filesystem.mkdirSync(photoDir + venueId);
