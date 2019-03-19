@@ -31,6 +31,7 @@ exports.getPhoto = function(venueId, filename, done) {
                 // Return the done function with a 404 - Not Found code
                 return done(404);
             } else {
+                // Set the isPrimary field to be a boolean
                 // Return the done function with a 200 - OK code and the photo data
                 return done(200, photoData, filename.split(".")[1]);
             }
@@ -39,6 +40,7 @@ exports.getPhoto = function(venueId, filename, done) {
 };
 
 exports.insert = function(venueId, photoData, photoBody, authToken, done) {
+    console.log(photoData);
     let insertQuery = "INSERT INTO VenuePhoto (venue_id, photo_filename, is_primary";
     let queryFields = ") VALUES (?, ?, ?";
     let isPrimary = false;
@@ -89,50 +91,68 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                     // Return the done function with a 403 - Forbidden code
                     return done(403);
                 }
-                // Get the filename from the photoData
-                let filename = photoData["originalname"];
-                // Set the values variable
-                values = [
-                    [venueId],
-                    [filename]
-                ];
-                // If the venue has a primary photo
-                if (venueRows[0]["primaryPhoto"] !== null) {
-                    // If the photo data includes a make_primary boolean
-                    if (photoBody["makePrimary"] !== undefined) {
-                        // Push isPrimary onto the values list and set it to the isPrimary list
-                        values.push([photoBody["makePrimary"]]);
-                        isPrimary = photoBody["makePrimary"] === "true";
+                // Generate a new filename
+                generateFilename(function(filename) {
+                    // Add the file extension
+                    filename += "." + photoData["mimetype"].split("/")[1];
+                    // Set the values variable
+                    values = [
+                        [venueId],
+                        [filename]
+                    ];
+                    // If the venue has a primary photo
+                    if (venueRows[0]["primaryPhoto"] !== null) {
+                        // If the photo data includes a make_primary boolean
+                        if (photoBody["makePrimary"] !== undefined) {
+                            // Push isPrimary onto the values list and set it to the isPrimary list
+                            values.push([photoBody["makePrimary"]]);
+                            isPrimary = photoBody["makePrimary"] === "true";
+                        } else {
+                            // Push false to the values list as the default is primary value.
+                            values.push([false]);
+                        }
                     } else {
-                        // Push false to the values list as the default is primary value.
-                        values.push([false]);
+                        values.push([true]);
                     }
-                } else {
-                    values.push([true]);
-                }
-                // If the photo data includes a description
-                if (photoBody["description"] !== undefined) {
-                    // Update the insert query with the description and increase the query fields by 1
-                    insertQuery += ", photo_description";
-                    queryFields += ", ?";
-                    values.push([photoBody["description"]]);
-                }
-                // Finish the insert query
-                insertQuery += queryFields + ")";
-                // If the venue-photo directory doesn't exist
-                if (!filesystem.existsSync(photoDir)) {
-                  // Create the directory
-                  filesystem.mkdirSync(photoDir);
-                }
-                // If the venueId directory doesn't exist
-                if (!filesystem.existsSync(photoDir + venueId)) {
-                    // Create the directory
-                    filesystem.mkdirSync(photoDir + venueId);
-                }
-                // If the photo is to be set to primary
-                if (isPrimary) {
-                    // Call the database to set all other photos for this venue to not primary
-                    db.getPool().query("UPDATE VenuePhoto SET is_primary=false WHERE venue_id=?", [venueId], function () {
+                    // If the photo data includes a description
+                    if (photoBody["description"] !== undefined) {
+                        // Update the insert query with the description and increase the query fields by 1
+                        insertQuery += ", photo_description";
+                        queryFields += ", ?";
+                        values.push([photoBody["description"]]);
+                    }
+                    // Finish the insert query
+                    insertQuery += queryFields + ")";
+                    // If the venue-photo directory doesn't exist
+                    if (!filesystem.existsSync(photoDir)) {
+                        // Create the directory
+                        filesystem.mkdirSync(photoDir);
+                    }
+                    // If the venueId directory doesn't exist
+                    if (!filesystem.existsSync(photoDir + venueId)) {
+                        // Create the directory
+                        filesystem.mkdirSync(photoDir + venueId);
+                    }
+                    // If the photo is to be set to primary
+                    if (isPrimary) {
+                        // Call the database to set all other photos for this venue to not primary
+                        db.getPool().query("UPDATE VenuePhoto SET is_primary=false WHERE venue_id=?", [venueId], function () {
+                            // Call the database to insert the photo
+                            db.getPool().query(insertQuery, values, function (err) {
+                                // If the database returns an error
+                                if (err) {
+                                    // Return the done function with a 400 - Bad Request code
+                                    return done(400);
+                                } else {
+                                    // Call the filesystem to save the photo
+                                    filesystem.writeFile(photoDir + venueId + "/" + filename, photoData["buffer"], function () {
+                                        // Return the done function with a 201 - Created code
+                                        return done(201);
+                                    });
+                                }
+                            });
+                        });
+                    } else {
                         // Call the database to insert the photo
                         db.getPool().query(insertQuery, values, function (err) {
                             // If the database returns an error
@@ -141,34 +161,19 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                                 return done(400);
                             } else {
                                 // Call the filesystem to save the photo
-                                filesystem.writeFile(photoDir + venueId + "/" + filename, photoData["buffer"], function () {
+                                filesystem.writeFile(photoDir + venueId + "/" + filename, photoData["buffer"], function (err) {
+                                    // If the filesystem returns an error
+                                    if (err) {
+                                        // Return the done function with a 500 - Internal Server Error code
+                                        return done(500);
+                                    }
                                     // Return the done function with a 201 - Created code
                                     return done(201);
                                 });
                             }
                         });
-                    });
-                } else {
-                    // Call the database to insert the photo
-                    db.getPool().query(insertQuery, values, function (err) {
-                        // If the database returns an error
-                        if (err) {
-                            // Return the done function with a 400 - Bad Request code
-                            return done(400);
-                        } else {
-                            // Call the filesystem to save the photo
-                            filesystem.writeFile(photoDir + venueId + "/" + filename, photoData["buffer"], function (err) {
-                                // If the filesystem returns an error
-                                if (err) {
-                                    // Return the done function with a 500 - Internal Server Error code
-                                    return done(500);
-                                }
-                                // Return the done function with a 201 - Created code
-                                return done(201);
-                            });
-                        }
-                    });
-                }
+                    }
+                });
             });
         });
     });
