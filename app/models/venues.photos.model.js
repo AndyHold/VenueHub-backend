@@ -157,7 +157,12 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                             return done(400);
                         } else {
                             // Call the filesystem to save the photo
-                            filesystem.writeFile(photoDir + "venueId" + "/" + filename, photoData["buffer"], function () {
+                            filesystem.writeFile(photoDir + venueId + "/" + filename, photoData["buffer"], function (err) {
+                                // If the filesystem returns an error
+                                if (err) {
+                                    // Return the done function with a 500 - Internal Server Error code
+                                    return done(500);
+                                }
                                 // Return the done function with a 201 - Created code
                                 return done(201);
                             });
