@@ -40,7 +40,6 @@ exports.getPhoto = function(venueId, filename, done) {
 };
 
 exports.insert = function(venueId, photoData, photoBody, authToken, done) {
-    console.log(photoData);
     let insertQuery = "INSERT INTO VenuePhoto (venue_id, photo_filename, is_primary";
     let queryFields = ") VALUES (?, ?, ?";
     let isPrimary = false;

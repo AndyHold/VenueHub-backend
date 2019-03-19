@@ -303,6 +303,10 @@ exports.getOne = function (venueId, done) {
                                     return done(404);
                                     // Otherwise
                                 } else {
+                                    // Set the isPrimary fields to be a boolean
+                                    for (let i = 0; i < photoRows.length; i++) {
+                                        photoRows[i]["isPrimary"] = (photoRows[i]["isPrimary"] === 1);
+                                    }
                                     // Set the photos field in the venue rows to be the results
                                     venueRows[0]["photos"] = photoRows;
                                     // Return the done function with a 200 - OK code and the results
