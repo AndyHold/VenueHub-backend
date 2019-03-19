@@ -68,7 +68,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
         // If there is a makePrimary Field included
         if (photoBody["makePrimary"] !== undefined) {
             // If the make primary field is not true or false
-            if (photoBody["makePrimary"] !== "true" || photoBody["makePrimary"] !== "false") {
+            if (photoBody["makePrimary"] !== "true" && photoBody["makePrimary"] !== "false") {
                 // Return the done function with a 400 - Bad Request code
                 return done(400);
             }
