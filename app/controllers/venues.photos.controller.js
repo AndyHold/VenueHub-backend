@@ -39,7 +39,7 @@ exports.delete = function(req, res) {
     // Get the venue Id from the params
     let venueId = req.params.id;
     // Get the filename from the params
-    let filename = req.params.photoFileName;
+    let filename = req.params.photoFilename;
     // Get the auth token from the headers
     let authToken = req.headers["x-authorization"];
     // Call the model class to perform the logic and call the database
@@ -52,7 +52,7 @@ exports.delete = function(req, res) {
 exports.primary = function(req, res) {
     // Get the venue id and the filename from the params
     let venueId = req.params.id;
-    let filename = req.params.photoFileName;
+    let filename = req.params.photoFilename;
     // Get the auth token from the headers
     let authToken = req.headers["x-authorization"];
     // Call the model class to perform the logic and call the database

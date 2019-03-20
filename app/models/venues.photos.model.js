@@ -179,6 +179,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
 };
 
 exports.remove = function(venueId, filename, authToken, done) {
+
     // If the token was not sent in the headers
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
