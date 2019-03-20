@@ -20,7 +20,7 @@ exports.read = function(req, res) {
     // Get the venue ID from the request params
     let venueId = req.params.id;
     // Get the filename form the request params
-    let filename = req.params.photoFileName;
+    let filename = req.params.photoFilename;
     // Call the model class to perform the logic and call the database
     Photo.getPhoto(venueId, filename, function(code, result, imageType) {
         // If the code is 404 - Not Found
