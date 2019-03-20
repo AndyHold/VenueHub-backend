@@ -179,7 +179,6 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
 };
 
 exports.remove = function(venueId, filename, authToken, done) {
-
     // If the token was not sent in the headers
     if (authToken === undefined) {
         // Return the done function with a 401 - Unauthorized code
@@ -187,7 +186,7 @@ exports.remove = function(venueId, filename, authToken, done) {
     }
     // Call the database to retrieve the venue data
     db.getPool().query("SELECT admin_id, photo_filename FROM Venue JOIN VenuePhoto " +
-        "ON Venue.venue_id=VenuePhoto.venue_id WHERE venue_id=?", [venueId], function (err, venueRows) {
+        "ON Venue.venue_id=VenuePhoto.venue_id WHERE Venue.venue_id=?", [venueId], function (err, venueRows) {
         // If the database returned an error or empty rows
         if(err || venueRows.length === 0) {
             // return the done function with a 404 - Not Found code
@@ -208,22 +207,27 @@ exports.remove = function(venueId, filename, authToken, done) {
                 if (err || photoRows.length === 0) {
                     // Return the done function with a 404 - Not Found error
                     return done(404);
-                    // If the photo is primary and there are more than one photo for this venue
                 }
                 // Call the database to delete the photo
                 db.getPool().query("DELETE FROM VenuePhoto WHERE photo_filename=?", [filename], function () {
                     // If the photo was primary and there was more than one photo for this venue
-                    if (photoRows[0]["is_primary"] || venueRows.length > 1) {
+                    if (photoRows[0]["is_primary"] && venueRows.length > 1) {
                         // Call the database to select a random photo from this venue
                         db.getPool().query("SELECT photo_filename FROM VenuePhoto WHERE venue_id=? ORDER BY RAND() LIMIT 1", [venueId], function (err, randomPhoto) {
                             // Call the database to set the value of this photo to primary
                             db.getPool().query("UPDATE VenuePhoto SET is_primary=true WHERE photo_filename=?", [randomPhoto[0]["photo_filename"]], function () {
                                 // Call the filesystem to delete the old photo
-                                filesystem.unlink(photoDir + "/" + venueId + "/" + filename, function () {
+                                filesystem.unlink(photoDir + venueId + "/" + filename, function () {
                                     // Return the done function with a 200 - OK code
                                     return done(200);
                                 });
                             });
+                        });
+                    } else {
+                        // Call the filesystem to delete the old photo
+                        filesystem.unlink(photoDir + venueId + "/" + filename, function () {
+                            // Return the done function with a 200 - OK code
+                            return done(200);
                         });
                     }
                 });
