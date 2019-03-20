@@ -4,10 +4,10 @@ const photoDir = __dirname + "/../venue-photos/";
 const uidGenerator = require('uid-generator');
 const uidGen = new uidGenerator(uidGenerator.BASE58,32);
 
-let generateFilename = function (done) {
+let generateFilename = function (venueId, done) {
     uidGen.generate( function (err, filename) {
         // If the filename is already in use or there is an error
-        if (err || filesystem.existsSync(photoDir + filename + ".jpeg") || filesystem.existsSync(photoDir + filename + ".png")) {
+        if (err || filesystem.existsSync(photoDir + venueId + "/" + filename + ".jpeg") || filesystem.existsSync(photoDir + venueId + "/" + filename + ".png")) {
             // Recursively request another filename
             return generateFilename(done);
         } else {
@@ -91,7 +91,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                     return done(403);
                 }
                 // Generate a new filename
-                generateFilename(function(filename) {
+                generateFilename(venueId,function(filename) {
                     // Add the file extension
                     filename += "." + photoData["mimetype"].split("/")[1];
                     // Set the values variable
