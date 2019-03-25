@@ -146,7 +146,11 @@ exports.getVenues = function (queries, done) {
             // If the sortByDistance boolean is set to false
             if (!sortByDistance) {
                 // Add DESC to the sortBy string
-                sortBy += " ASC";
+                if (sortBy === "ORDER BY modeCostRating") {
+                    sortBy += " DESC";
+                } else {
+                    sortBy += " ASC";
+                }
                 // Otherwise
             } else {
                 // Set the reverseOrder boolean to true
@@ -154,7 +158,11 @@ exports.getVenues = function (queries, done) {
             }
         }
     } else if (!sortByDistance) {
-        sortBy += " DESC";
+        if (sortBy === "ORDER BY modeCostRating") {
+            sortBy += " ASC";
+        } else {
+            sortBy += " DESC";
+        }
     }
     // Set the queryTemplate and concatenate the search options
     let queryTemplate = "SELECT venueId, venueName, categoryId, city, shortDescription, latitude, longitude, meanStarRating, modeCostRating, primaryPhoto\n" +
