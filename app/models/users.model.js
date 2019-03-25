@@ -299,7 +299,7 @@ let validateField = async function (userData, queryData, fieldCamel, fieldDataba
     return queryData;
 };
 
-exports.updateUser = function(userData, authToken, userId, done) {
+exports.updateUser = async function (userData, authToken, userId, done) {
     // Initialize a boolean variable isValidRequestField to false and an update query in an object
     let queryData = {
         "isValidRequestField": false,
@@ -310,7 +310,20 @@ exports.updateUser = function(userData, authToken, userId, done) {
         // Return the done function with a 401 - Unauthorized code
         return done(401);
         // If the body is empty
-    } else if (userData.length === 0) {
+    }
+    let authedUserRows;
+    try {
+        authedUserRows = await db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [authToken]);
+    } catch (error) {
+        return done(403);
+    }
+    if (authedUserRows.length === 0) {
+        return done(403);
+    }
+    if (authedUserRows[0]["user_id"] !== userId) {
+        return done(401);
+    }
+    if (userData.length === 0) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
     } else {
@@ -320,11 +333,7 @@ exports.updateUser = function(userData, authToken, userId, done) {
             if (err || rows.length === 0) {
                 // Return the done function with a 404 - Not Found code
                 return done(404);
-            // If the tokens do not match
-            } else if (authToken !== rows[0]["auth_token"]) {
-                // Return the done function with a 403 - Forbidden code
-                return done(403);
-            // If one or more of the required fields are missing, or incorrect
+                // If one or more of the required fields are missing, or incorrect
             } else {
                 // Check which fields are going to be updated and put in the the query
                 await validateField(userData, queryData, "givenName", "given_name");
@@ -334,6 +343,9 @@ exports.updateUser = function(userData, authToken, userId, done) {
                 if (!userData.hasOwnProperty("password")) {
                     // Finish the query
                     queryData.updateQuery += " WHERE user_id=?";
+                }
+                if (!queryData.isValidRequestField) {
+                    return done(400);
                 }
                 // Call the database to update the users records
                 db.getPool().query(queryData.updateQuery, [userId], function (err) {

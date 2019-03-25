@@ -69,7 +69,7 @@ exports.updateUser = function(req, res) {
     // Get the bearer from the request headers
     const bearer = req.headers["x-authorization"];
     // Parse the id from the request parameters
-    const userId = req.params.id;
+    const userId = parseInt(req.params.id);
     // Call the model class to query the database and do the logic
     Users.updateUser(userData, bearer, userId, function(code) {
         // Send the status code in the response
