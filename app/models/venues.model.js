@@ -226,7 +226,7 @@ exports.getVenues = function (queries, done) {
                     // Calculate the difference in the two distance values
                     let difference = parseFloat(one["distance"]) - parseFloat(two["distance"]);
                     // If the reverseOrder boolean is set to true
-                    if (reverseOrder) {
+                    if (!reverseOrder) {
                         // Multiply the difference by -1 and return it
                         return difference * -1;
                         // Otherwise
