@@ -474,8 +474,6 @@ exports.alter = async function (authToken, venueData, venueId, done) {
         return done(404);
         // If the user is not the admin of this venue
     } else if (userId !== venueRows[0]["adminId"]) {
-        console.log(userId);
-        console.log(venueRows[0]["adminId"]);
         // Return the done function with a 403 - Forbidden code
         return done(403);
         // Otherwise
@@ -491,6 +489,9 @@ exports.alter = async function (authToken, venueData, venueId, done) {
         queryData = validateField(venueData, queryData, "longitude", "longitude", true);
         // finish the query
         queryData.updateQuery += " WHERE venue_id=?";
+        if (!queryData.isValidRequestField) {
+            return done(400);
+        }
         // Call the database to update the venue details
         try {
             db.getPool().query(queryData.updateQuery, [venueId]);
