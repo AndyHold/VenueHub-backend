@@ -4,28 +4,33 @@ exports.getReviewsFromVenue = function(venueId, done) {
     // Call the database to retrieve the reviews from the given venue
     db.getPool().query('SELECT review_author_id AS reviewAuthor, review_body AS reviewBody, ' +
         'star_rating AS starRating, cost_rating AS costRating, time_posted AS timePosted ' +
-        'FROM Review WHERE reviewed_venue_id=? ORDER BY time_posted DESC', [[venueId]], function (err, reviewRows) {
+        'FROM Review WHERE reviewed_venue_id=? ORDER BY time_posted DESC', [[venueId]], async function (err, reviewRows) {
         // If the database returns an error or empty rows
         if (err || reviewRows.length === 0) {
             // Return the done function with a 404 - Not Found code
             return done(404);
-        // Otherwise
+            // Otherwise
         } else {
             // For each review
             for (let i = 0; i < reviewRows.length; i++) {
-                // Call the database to retrieve the authors details
-                db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [reviewRows[i]["reviewAuthor"]], function (err, userRows) {
-                    // If the database doesn't return an error
-                    if (!err) {
-                        // Update the review user in the reviewRows
-                        reviewRows[i]["reviewAuthor"] = userRows[0];
-                    }
-                    // If this is the last review in the list
-                    if (i === reviewRows.length - 1) {
-                        // Return the done function with a 200 - OK code and the results
-                        return done(200, reviewRows);
-                    }
-                });
+                let userRows;
+                let errored = false;
+                try {
+                    // Call the database to retrieve the authors details
+                    userRows = await db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [reviewRows[i]["reviewAuthor"]]);
+                } catch (error) {
+                    errored = true;
+                }
+                // If the database doesn't return an error
+                if (!errored) {
+                    // Update the review user in the reviewRows
+                    reviewRows[i]["reviewAuthor"] = userRows[0];
+                }
+                // If this is the last review in the list
+                if (i === reviewRows.length - 1) {
+                    // Return the done function with a 200 - OK code and the results
+                    return done(200, reviewRows);
+                }
             }
         }
     });
