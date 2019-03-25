@@ -315,13 +315,13 @@ exports.updateUser = async function (userData, authToken, userId, done) {
     try {
         authedUserRows = await db.getPool().query("SELECT user_id FROM User WHERE auth_token = ?", [authToken]);
     } catch (error) {
-        return done(403);
+        return done(401);
     }
     if (authedUserRows.length === 0) {
-        return done(403);
+        return done(401);
     }
     if (authedUserRows[0]["user_id"] !== userId) {
-        return done(401);
+        return done(403);
     }
     if (userData.length === 0) {
         // Return the done function with a 400 - Bad Request code
