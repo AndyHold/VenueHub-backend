@@ -460,16 +460,6 @@ exports.alter = async function (authToken, venueData, venueId, done) {
     }
     // Set the user id from the database to a variable
     userId = userRows[0]["userId"];
-    let authRows;
-    try {
-        // Call the database to retrieve the user associated with this token
-        authRows = await db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken]);
-    } catch (error) {
-        authRows = [];
-    }
-    if (authRows.length === 0) {
-        return done(401);
-    }
     let venueRows;
     try {
         // Call the database to check if the venue exists
