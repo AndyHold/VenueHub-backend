@@ -18,7 +18,7 @@ const haversine = function (longitude1, latitude1, longitude2, latitude2) {
     return 6367 * c;
 };
 
-exports.getVenues = function (queries, done) {
+exports.getVenues = async function (queries, done) {
     // TODO refactor this code so it is more readable with smaller functions
     // Set the booleans sortByDistance and reverseOrder to false and queryBody to an empty string
     let sortByDistance = false;
@@ -194,43 +194,40 @@ exports.getVenues = function (queries, done) {
         "WHERE\n" +
         "is_primary) AS Photos ON Photos.venue_id=Venue.venue_id) AS Results\n" +
         queryBody + "\n" + sortBy;
-    // Call the database to return the results of the search
-    db.getPool().query(queryTemplate, function (err, rows) {
-        // If the database returns an error
-        if (err) {
-            // Return the done function with a 400 - Bad Request code
-            return done(400);
-        } else {
-            // Set the start and count variables to thier defaults
-            let start = 0;
-            let count = rows.length;
-            // If the query has a start index property
-            if (queries.hasOwnProperty("startIndex")) {
-                // Set the start index to the int value parsed from the query
-                start = parseInt(queries["startIndex"]);
+    try {
+        // Call the database to return the results of the search
+        let rows = await db.getPool().query(queryTemplate);
+        // Set the start and count variables to thier defaults
+        let start = 0;
+        let count = rows.length;
+        // If the query has a start index property
+        if (queries.hasOwnProperty("startIndex")) {
+            // Set the start index to the int value parsed from the query
+            start = parseInt(queries["startIndex"]);
+        }
+        // If the query has a count property
+        if (queries.hasOwnProperty("count")) {
+            // Set the count value to the int value parsed from the query
+            count = parseInt(queries["count"]);
+        }
+        // If the sortByDistance boolean is set to true
+        if (queries.hasOwnProperty("myLatitude") && queries.hasOwnProperty("myLongitude")) {
+            // Parse the latitude and longitude values from the query into floats
+            let latitude2 = parseFloat(queries["myLatitude"]);
+            let longitude2 = parseFloat(queries["myLongitude"]);
+            // Iterate through the rows returned by the database
+            for (let i = 0; i < rows.length; i++) {
+                // Parse the latitude and longitude values from the database row into floats
+                let latitude1 = parseFloat(rows[i]["latitude"]);
+                let longitude1 = parseFloat(rows[i]["longitude"]);
+                // Use the haversine function to calculate the distance
+                let distance = haversine(longitude1, latitude1, longitude2, latitude2);
+                // Add the distance to the row it was calculated from
+                rows[i]["distance"] = (Math.round(distance * 1000) / 1000).toString();
             }
-            // If the query has a count property
-            if (queries.hasOwnProperty("count")) {
-                // Set the count value to the int value parsed from the query
-                count = parseInt(queries["count"]);
-            }
-            // If the sortByDistance boolean is set to true
             if (sortByDistance) {
-                // Parse the latitude and longitude values from the query into floats
-                let latitude2 = parseFloat(queries["myLatitude"]);
-                let longitude2 = parseFloat(queries["myLongitude"]);
-                // Iterate through the rows returned by the database
-                for (let i = 0; i < rows.length; i++) {
-                    // Parse the latitude and longitude values from the database row into floats
-                    let latitude1 = parseFloat(rows[i]["latitude"]);
-                    let longitude1 = parseFloat(rows[i]["longitude"]);
-                    // Use the haversine function to calculate the distance
-                    let distance = haversine(longitude1, latitude1, longitude2, latitude2);
-                    // Add the distance to the row it was calculated from
-                    rows[i]["distance"] = (Math.round(distance * 1000) / 1000).toString();
-                }
                 // Call the sort function of arrays passing in a compare function
-                rows.sort(function (one, two) {
+                await rows.sort(function (one, two) {
                     // Calculate the difference in the two distance values
                     let difference = parseFloat(one["distance"]) - parseFloat(two["distance"]);
                     // If the reverseOrder boolean is set to true
@@ -243,93 +240,101 @@ exports.getVenues = function (queries, done) {
                         return difference;
                     }
                 });
-                // Return the done function with a 200 - OK code and the section of the rows requested
-                let results = rows.splice(start, count);
-                return done(200, results);
-                // Otherwise
-            } else {
-                // Return the done function with a 200 - OK code and the section of the rows requested
-                let results = rows.splice(start, count);
-                return done(200, results);
             }
+            // Return the done function with a 200 - OK code and the section of the rows requested
+            let results = rows.splice(start, count);
+            return done(200, results);
+            // Otherwise
+        } else {
+            // Return the done function with a 200 - OK code and the section of the rows requested
+            let results = rows.splice(start, count);
+            return done(200, results);
         }
-    });
+    } catch (error) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
 };
 
-exports.getCats = function (done) {
-    db.getPool().query('SELECT category_id AS categoryId, category_name AS categoryName, category_description AS categoryDescription FROM VenueCategory', function (err, rows) {
-        // If the database returns an error
-        if (err) {
-            // Set rows to an empty array
-            rows = [];
-            //Otherwise
-        }
-        // Return the done function with the rows that the database returned
-        return done(rows);
-    });
+exports.getCats = async function (done) {
+    let rows;
+    try {
+        rows = await db.getPool().query('SELECT category_id AS categoryId, category_name AS categoryName, category_description AS categoryDescription FROM VenueCategory');
+    } catch (error) {
+        rows = [];
+    }
+    // Return the done function with the rows that the database returned
+    return done(rows);
 };
 
-exports.getOne = function (venueId, done) {
-    // Call the database to get the venue data
-    db.getPool().query('SELECT venue_name AS venueName, admin_id AS admin, category_id AS category, city, ' +
-        'short_description AS shortDescription, long_description as longDescription, date_added AS dateAdded, ' +
-        'address, latitude, longitude FROM Venue WHERE venue_id=?', [venueId], function (err, venueRows) {
+exports.getOne = async function (venueId, done) {
+    let venueRows;
+    try {
+        // Call the database to get the venue data
+        venueRows = await db.getPool().query('SELECT venue_name AS venueName, admin_id AS admin, category_id AS category, city, ' +
+            'short_description AS shortDescription, long_description as longDescription, date_added AS dateAdded, ' +
+            'address, latitude, longitude FROM Venue WHERE venue_id=?', [venueId])
+    } catch (error) {
+        return done(404);
+    }
+    // If the database returns an error or the rows are empty
+    if (venueRows.length === 0) {
+        // Return the done function with a 404 - Not Found code
+        return done(404);
+        // Otherwise
+    } else {
+        // Call the database to get the admin information
+        let adminRows;
+        try {
+            adminRows = await db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [venueRows[0]["admin"]]);
+        } catch (error) {
+            return done(404);
+        }
         // If the database returns an error or the rows are empty
-        if (err || venueRows.length === 0) {
+        if (adminRows.length === 0) {
             // Return the done function with a 404 - Not Found code
             return done(404);
             // Otherwise
         } else {
-            // Call the database to get the admin information
-            db.getPool().query("SELECT user_id AS userId, username FROM User WHERE user_id=?", [venueRows[0]["admin"]], function (err, adminRows) {
-                // If the database returns an error or the rows are empty
-                if (err || adminRows.length === 0) {
-                    // Return the done function with a 404 - Not Found code
+            let categoryRows;// Set the admin field in the venue rows to be the results.
+            venueRows[0]["admin"] = adminRows[0];
+            try {
+                // Call the database to get the category information
+                categoryRows = await db.getPool().query("SELECT category_id as categoryId, category_name AS categoryName, " +
+                    "category_description AS categoryDescription FROM VenueCategory WHERE category_id=?", [venueRows[0]["category"]]);
+            } catch (error) {
+                return done(404);
+            }
+            // If the database returns an error or the rows are empty
+            if (categoryRows.length === 0) {
+                // Return the done function with a 404 - Not Found code
+                return done(404);
+                // Otherwise
+            } else {
+                // Set the category field in the venue rows to be the results
+                venueRows[0]["category"] = categoryRows[0];
+                let photoRows;
+                try {// Call the database to get the venue photos
+                    photoRows = await db.getPool().query("SELECT photo_filename as photoFilename," +
+                        " photo_description AS photoDescription, is_primary AS isPrimary FROM VenuePhoto " +
+                        "WHERE venue_id=?", [venueId]);
+                } catch (error) {
                     return done(404);
-                    // Otherwise
-                } else {
-                    // Set the admin field in the venue rows to be the results.
-                    venueRows[0]["admin"] = adminRows[0];
-                    // Call the database to get the category information
-                    db.getPool().query("SELECT category_id as categoryId, category_name AS categoryName, " +
-                        "category_description AS categoryDescription FROM VenueCategory WHERE category_id=?", [venueRows[0]["category"]], function (err, categoryRows) {
-                        // If the database returns an error or the rows are empty
-                        if (err || categoryRows.length === 0) {
-                            // Return the done function with a 404 - Not Found code
-                            return done(404);
-                            // Otherwise
-                        } else {
-                            // Set the category field in the venue rows to be the results
-                            venueRows[0]["category"] = categoryRows[0];
-                            // Call the database to get the venue photos
-                            db.getPool().query("SELECT photo_filename as photoFilename," +
-                                " photo_description AS photoDescription, is_primary AS isPrimary FROM VenuePhoto " +
-                                "WHERE venue_id=?", [venueId], function (err, photoRows) {
-                                // If the database returns an error or the rows are empty
-                                if (err) {
-                                    // Return the done function with a 404 - Not Found code
-                                    return done(404);
-                                    // Otherwise
-                                } else {
-                                    // Set the isPrimary fields to be a boolean
-                                    for (let i = 0; i < photoRows.length; i++) {
-                                        photoRows[i]["isPrimary"] = (photoRows[i]["isPrimary"] === 1);
-                                    }
-                                    // Set the photos field in the venue rows to be the results
-                                    venueRows[0]["photos"] = photoRows;
-                                    // Return the done function with a 200 - OK code and the results
-                                    return done(200, venueRows[0]);
-                                }
-                            });
-                        }
-                    });
                 }
-            });
+                // Set the isPrimary fields to be a boolean
+                for (let i = 0; i < photoRows.length; i++) {
+                    photoRows[i]["isPrimary"] = (photoRows[i]["isPrimary"] === 1);
+                }
+                // Set the photos field in the venue rows to be the results
+                venueRows[0]["photos"] = photoRows;
+                // Return the done function with a 200 - OK code and the results
+                return done(200, venueRows[0]);
+            }
         }
-    });
+    }
 };
 
-exports.insert = function (authToken, venueData, done) {
+exports.insert = async function (authToken, venueData, done) {
     // Put the new venue data into an array ready for the database to insert.
     let values = [
         [venueData["venueName"]],
@@ -355,56 +360,53 @@ exports.insert = function (authToken, venueData, done) {
         return done(400);
         // Otherwise
     } else {
-        // Call the database to get the category Id
-        db.getPool().query("SELECT * FROM VenueCategory WHERE category_id=?", [venueData["categoryId"]], function (err, categoryRows) {
-            // If the category does not exist (the rows are empty)
-            if (categoryRows.length === 0) {
+        let categoryRows;
+        try {
+            // Call the database to get the category Id
+            categoryRows = await db.getPool().query("SELECT * FROM VenueCategory WHERE category_id=?", [venueData["categoryId"]]);
+        } catch (error) {
+            console.log(error);
+        }
+        // If the category does not exist (the rows are empty)
+        if (categoryRows.length === 0) {
+            // Return the done function with a 400 - Bad Request code
+            return done(400);
+        }
+        // If the auth header type is not undefined
+        if (authToken === undefined) {
+            return done(401);
+        }
+        let userRows;
+        try {
+            // Call the database to retrieve the user associated with this token
+            userRows = await db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken]);
+        } catch (error) {
+            userRows = [];
+        }
+        // If the rows are empty (there is no user logged in with this token)
+        if (userRows.length === 0) {
+            // Return the done function with a 403 - Unauthorized code
+            return done(401);
+            // Otherwise
+        } else {
+            // Extract the user id from the rows
+            let userId = userRows[0]["userId"];
+            // Get the current time
+            let currentDate = new Date();
+            // Push the userId and the current date onto the values array
+            values.push([userId]);
+            values.push([currentDate]);
+            let insertRows;
+            try {
+                // Call the database to insert the new venue
+                insertRows = await db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values);
+            } catch (error) {
                 // Return the done function with a 400 - Bad Request code
                 return done(400);
             }
-            // If the auth header type is not undefined
-            if (authToken !== undefined) {
-                // Call the database to retrieve the user associated with this token
-                db.getPool().query("SELECT user_id as userId FROM User WHERE auth_token=?", [authToken], function (err, rows) {
-                    // If the database returns an error
-                    if (err) {
-                        // Set rows to an empty array
-                        rows = [];
-                        // Otherwise
-                    }
-                    // If the rows are empty (there is no user logged in with this token)
-                    if (rows.length === 0) {
-                        // Return the done function with a 403 - Unauthorized code
-                        return done(401);
-                        // Otherwise
-                    } else {
-                        // Extract the user id from the rows
-                        let userId = rows[0]["userId"];
-                        // Get the current time
-                        let currentDate = new Date();
-                        // Push the userId and the current date onto the values array
-                        values.push([userId]);
-                        values.push([currentDate]);
-                        // Call the database to insert the new venue
-                        db.getPool().query("INSERT INTO Venue (venue_name, category_id, city, short_description, long_description, address, latitude, longitude, admin_id, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values, function (err, rows) {
-                            // If the database returns an error
-                            if (err) {
-                                // Return the done function with a 400 - Bad Request code
-                                return done(400);
-                                // Otherwise
-                            } else {
-                                // Return the done function with a 201 - Created code and an object containing the new venue id
-                                return done(201, {"venueId": rows["insertId"]});
-                            }
-                        });
-                    }
-                });
-                // Otherwise
-            } else {
-                // Return the done function with a 401 - Unauthorized code
-                return done(401);
-            }
-        });
+            // Return the done function with a 201 - Created code and an object containing the new venue id
+            return done(201, {"venueId": insertRows["insertId"]});
+        }
     }
 };
 
@@ -430,7 +432,7 @@ let validateField = function (venueData, queryData, fieldCamel, fieldDatabase, i
     return queryData;
 };
 
-exports.alter = function (authToken, venueData, venueId, done) {
+exports.alter = async function (authToken, venueData, venueId, done) {
     // Initialize a boolean variable isValidRequestField to false and an update query in an object
     let queryData = {
         "isValidRequestField": false,
@@ -443,60 +445,60 @@ exports.alter = function (authToken, venueData, venueId, done) {
         // Return the done function with a 401 - Unauthorized code
         return done(401);
     }
-    // Call the database to retrieve the user logged in with the given token
-    db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken], function (err, userRows) {
-        // If the database returned an error
-        if (err) {
+    let userRows;
+    try {
+        // Call the database to retrieve the user logged in with the given token
+        userRows = await db.getPool().query("SELECT user_id AS userId FROM User WHERE auth_token=?", [authToken]);
+    } catch (error) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
+    // If the returned rows are empty
+    if (userRows.length === 0) {
+        // Return the done function with a 401 - Unauthorized code
+        return done(401);
+    }
+    // Set the user id from the database to a variable
+    userId = userRows[0]["userId"];
+    let venueRows;
+    try {
+        // Call the database to check if the venue exists
+        venueRows = await db.getPool().query("SELECT admin_id AS adminId FROM Venue WHERE venue_id=?", [venueId]);
+    } catch (error) {
+        // Return the done function with a 400 - Bad Request code
+        return done(400);
+    }
+    // if the database returns no venues
+    if (venueRows.length === 0) {
+        // Return the done function with a 404 - Not Found code
+        return done(404);
+        // If the user is not the admin of this venue
+    } else if (userId !== venueRows[0]["adminId"]) {
+        console.log(userId);
+        console.log(venueRows[0]["adminId"]);
+        // Return the done function with a 403 - Forbidden code
+        return done(403);
+        // Otherwise
+    } else {
+        // Check which fields are going to be updated and put in the the query
+        queryData = validateField(venueData, queryData, "venueName", "venue_name", false);
+        queryData = validateField(venueData, queryData, "categoryId", "category_id", true);
+        queryData = validateField(venueData, queryData, "city", "city", false);
+        queryData = validateField(venueData, queryData, "shortDescription", "short_description", false);
+        queryData = validateField(venueData, queryData, "longDescription", "long_description", false);
+        queryData = validateField(venueData, queryData, "address", "address", false);
+        queryData = validateField(venueData, queryData, "latitude", "latitude", true);
+        queryData = validateField(venueData, queryData, "longitude", "longitude", true);
+        // finish the query
+        queryData.updateQuery += " WHERE venue_id=?";
+        // Call the database to update the venue details
+        try {
+            db.getPool().query(queryData.updateQuery, [venueId]);
+        } catch (error) {
             // Return the done function with a 400 - Bad Request code
             return done(400);
         }
-        // If the returned rows are empty
-        if (userRows.length === 0) {
-            // Return the done function with a 401 - Unauthorized code
-            return done(401);
-        }
-        // Set the user id from the database to a variable
-        userId = userRows[0]["userId"];
-        // Call the database to check if the venue exists
-        db.getPool().query("SELECT admin_id AS adminId FROM Venue WHERE venue_id=?", [venueId], function (err, venueRows) {
-            // If the database returns an error
-            if (err) {
-                // Return the done function with a 400 - Bad Request code
-                return done(400);
-                // if the database returns no venues
-            } else if (venueRows.length === 0) {
-                // Return the done function with a 404 - Not Found code
-                return done(404);
-                // If the user is not the admin of this venue
-            } else if (userId !== venueRows[0]["adminId"]) {
-                // Return the done function with a 403 - Forbidden code
-                return done(403);
-                // Otherwise
-            } else {
-                // Check which fields are going to be updated and put in the the query
-                queryData = validateField(venueData, queryData, "venueName", "venue_name", false);
-                queryData = validateField(venueData, queryData, "categoryId", "category_id", true);
-                queryData = validateField(venueData, queryData, "city", "city", false);
-                queryData = validateField(venueData, queryData, "shortDescription", "short_description", false);
-                queryData = validateField(venueData, queryData, "longDescription", "long_description", false);
-                queryData = validateField(venueData, queryData, "address", "address", false);
-                queryData = validateField(venueData, queryData, "latitude", "latitude", true);
-                queryData = validateField(venueData, queryData, "longitude", "longitude", true);
-                // finish the query
-                queryData.updateQuery += " WHERE venue_id=?";
-                // Call the database to update the venue details
-                db.getPool().query(queryData.updateQuery, [venueId], function (err) {
-                    // If the database returns an error
-                    if (err) {
-                        // Return the done function with a 400 - Bad Request code
-                        return done(400);
-                        // Otherwise
-                    } else {
-                        // Return the done function with a 200 - OK code
-                        return done(200);
-                    }
-                });
-            }
-        });
-    });
+        // Return the done function with a 200 - OK code
+        return done(200);
+    }
 };
