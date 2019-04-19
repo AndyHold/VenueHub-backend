@@ -7,7 +7,7 @@ const upload = multer({ storage: storage });
 const allowCrossOriginRequests = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-Authorization');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, PATCH, DELETE');
     next();
 };
 
@@ -19,8 +19,8 @@ module.exports = function () {
     app.use(allowCrossOriginRequests);
     app.use(bodyParser.json());
     app.use(bodyParser.raw({type: 'text/plain'}));  // for the /executeSql endpoint
-    app.use(bodyParser.raw({type: 'image/jpeg', limit: '5mb'}));
-    app.use(bodyParser.raw({type: 'image/png', limit: '5mb'}));
+    app.use(bodyParser.raw({type: 'image/jpeg', limit: '20mb'}));
+    app.use(bodyParser.raw({type: 'image/png', limit: '20mb'}));
     app.use(bodyParser.urlencoded({
         extended: true
     }));
