@@ -27,6 +27,7 @@ exports.setPhoto = function(req, res) {
     let contentType = req.headers["content-type"];
     // Get the picture data from the body
     let picData = req.body;
+    console.log(picData);
     // Call the model class to perform the logic and call the database
     Photos.setPhoto(userId, authToken, contentType, picData, function (code) {
         // Return the result code via the response
