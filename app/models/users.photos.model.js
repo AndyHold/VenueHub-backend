@@ -89,7 +89,7 @@ exports.setPhoto = function(userId, authToken, contentType, picData, done) {
                             // Call the database to replace the filename
                             db.getPool().query("UPDATE User SET profile_photo_filename=? WHERE user_id=?", [[filename], [userId]], function () {
                                 // Return the done function with a 200 - OK code
-                                return done(200);
+                                return done(201);
                             });
                         });
                     }
