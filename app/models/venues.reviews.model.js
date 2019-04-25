@@ -87,7 +87,7 @@ exports.getReviewsFromUser = function(userId, authToken, done) {
                     let venueErrored = false;
                     try {
                         // Call the database to retrieve the venue data for the review
-                        venueRows = await db.getPool().query("SELECT Venue.venue_id AS venueId, venue_name AS VenueName, " +
+                        venueRows = await db.getPool().query("SELECT Venue.venue_id AS venueId, venue_name AS venueName, " +
                             "categoryName, city, short_description AS shortDescription, " +
                             "COALESCE(photo_filename, NULL) AS primaryPhoto FROM Venue LEFT JOIN (SELECT photo_filename, " +
                             "venue_id FROM VenuePhoto WHERE is_primary) AS Photo ON Venue.venue_id=Photo.venue_id JOIN " +
