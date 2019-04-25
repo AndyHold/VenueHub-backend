@@ -57,16 +57,16 @@ exports.getReviewsFromUser = function(userId, authToken, done) {
             // Return the done function with a 401 - Unauthorized code
             return done(401);
         }
-        // Call the database to retrieve the reviews from the given user
-        db.getPool().query('SELECT review_author_id AS reviewAuthor, review_body AS reviewBody, ' +
-            'star_rating AS starRating, cost_rating AS costRating, time_posted AS timePosted, ' +
-            'reviewed_venue_id AS venue FROM Review WHERE review_author_id=? ORDER BY time_posted DESC', [userId], async function (err, reviewRows) {
-            // If the database returns an error or empty rows
-            if (err || reviewRows.length === 0) {
-                // Return the done function with a 404 - Not Found code
+        db.getPool().query("SELECT * FROM User WHERE user_id=?", [userId], function (err, userRows) {
+            // If the user does not exist.
+            if (userRows.length === 0) {
+                // Return the done function with a 404 Not Found code.
                 return done(404);
-                // Otherwise
-            } else {
+            }
+            // Call the database to retrieve the reviews from the given user
+            db.getPool().query('SELECT review_author_id AS reviewAuthor, review_body AS reviewBody, ' +
+                'star_rating AS starRating, cost_rating AS costRating, time_posted AS timePosted, ' +
+                'reviewed_venue_id AS venue FROM Review WHERE review_author_id=? ORDER BY time_posted DESC', [userId], async function (err, reviewRows) {
                 // For each review
                 for (let i = 0; i < reviewRows.length; i++) {
                     let userRows;
@@ -108,7 +108,7 @@ exports.getReviewsFromUser = function(userId, authToken, done) {
                         return done(200, reviewRows);
                     }
                 }
-            }
+            });
         });
     });
 };
