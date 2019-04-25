@@ -171,8 +171,10 @@ exports.insertReview = function(venueId, reviewData, authToken, done) {
                     // Return the done function with a 403 - Unauthorized code
                     return done(403);
                 } else {
+                    let currentTime = new Date();
+                    values.push([currentTime]);
                     // Call the database to insert the review
-                    db.getPool().query("INSERT INTO Review (review_body, star_rating, cost_rating, reviewed_venue_id, review_author_id) VALUES (?, ?, ?, ?, ?)", values, function (err) {
+                    db.getPool().query("INSERT INTO Review (review_body, star_rating, cost_rating, reviewed_venue_id, review_author_id, time_posted) VALUES (?, ?, ?, ?, ?, ?)", values, function (err) {
                         // If the database returns an error
                         if (err) {
                             // Return the done function with a 400 - Bad Request code
