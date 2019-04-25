@@ -61,8 +61,8 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
             // Return the done function with a 401 - Unauthorized code
             return done(401);
         }
-        // If the photo or the description was not included or the description is empty
-        if (!photoData || photoBody["description"] === undefined || photoBody["description"].length === 0) {
+        // If the photo was not included
+        if (!photoData) {
             // Return the done function with a 400 - Bad Request code
             return done(400);
         }
@@ -104,7 +104,7 @@ exports.insert = function(venueId, photoData, photoBody, authToken, done) {
                         // If the photo data includes a make_primary boolean
                         if (photoBody["makePrimary"] !== undefined) {
                             // Push isPrimary onto the values list and set it to the isPrimary list
-                            values.push([photoBody["makePrimary"]]);
+                            values.push([photoBody["makePrimary"] === "true"]);
                             isPrimary = photoBody["makePrimary"] === "true";
                         } else {
                             // Push false to the values list as the default is primary value.
