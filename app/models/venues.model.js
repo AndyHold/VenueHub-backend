@@ -354,8 +354,8 @@ exports.insert = async function (authToken, venueData, done) {
         !(venueData.hasOwnProperty("shortDescription") && typeof venueData["shortDescription"] === typeof "" && venueData["shortDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("longDescription") && typeof venueData["longDescription"] === typeof "" && venueData["longDescription"].length !== 0) ||
         !(venueData.hasOwnProperty("address") && typeof venueData["address"] === typeof "" && venueData["address"].length !== 0) ||
-        !(venueData.hasOwnProperty("latitude") && typeof venueData["latitude"] === "number") || Math.abs(parseFloat(venueData["latitude"])) > 90 ||
-        !(venueData.hasOwnProperty("longitude") && typeof parseFloat(venueData["longitude"]) === "number") || Math.abs(parseFloat(venueData["longitude"])) > 180) {
+        !(venueData.hasOwnProperty("latitude")) || Math.abs(parseFloat(venueData["latitude"])) > 90 ||
+        !(venueData.hasOwnProperty("longitude")) || Math.abs(parseFloat(venueData["longitude"])) > 180) {
         // Return the done function with a 400 - Bad Request code
         return done(400);
         // Otherwise
