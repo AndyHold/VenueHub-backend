@@ -1,16 +1,16 @@
 const db = require('../../config/db');
 
 exports.getReviewsFromVenue = function(venueId, done) {
-    // Call the database to retrieve the reviews from the given venue
-    db.getPool().query('SELECT review_author_id AS reviewAuthor, review_body AS reviewBody, ' +
-        'star_rating AS starRating, cost_rating AS costRating, time_posted AS timePosted ' +
-        'FROM Review WHERE reviewed_venue_id=? ORDER BY time_posted DESC', [[venueId]], async function (err, reviewRows) {
+    db.getPool().query("SELECT * FROM Venue WHERE venue_id=?", [venueId], function (err, venueRows) {
         // If the database returns an error or empty rows
-        if (err || reviewRows.length === 0) {
+        if (err || venueRows.length === 0) {
             // Return the done function with a 404 - Not Found code
             return done(404);
-            // Otherwise
-        } else {
+        }
+        // Call the database to retrieve the reviews from the given venue
+        db.getPool().query('SELECT review_author_id AS reviewAuthor, review_body AS reviewBody, ' +
+            'star_rating AS starRating, cost_rating AS costRating, time_posted AS timePosted ' +
+            'FROM Review WHERE reviewed_venue_id=? ORDER BY time_posted DESC', [[venueId]], async function (err, reviewRows) {
             // For each review
             for (let i = 0; i < reviewRows.length; i++) {
                 let userRows;
@@ -32,7 +32,7 @@ exports.getReviewsFromVenue = function(venueId, done) {
                     return done(200, reviewRows);
                 }
             }
-        }
+        });
     });
 };
 
