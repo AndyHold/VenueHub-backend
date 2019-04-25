@@ -51,9 +51,9 @@ exports.getReviewsFromUser = function(userId, authToken, done) {
         return done(401);
     }
     // Call the database to get the users token
-    db.getPool().query("SELECT auth_token FROM User WHERE user_id=?", [userId], function (err, userTokenRows) {
+    db.getPool().query("SELECT * FROM User WHERE auth_token=?", [authToken], function (err, userTokenRows) {
         // If the database returns an error, or if the tokens do not match
-        if (err || authToken !== userTokenRows[0]["auth_token"]) {
+        if (err || userTokenRows.length === 0) {
             // Return the done function with a 401 - Unauthorized code
             return done(401);
         }
